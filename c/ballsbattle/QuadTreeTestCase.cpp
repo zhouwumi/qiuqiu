@@ -39,7 +39,7 @@ void QuadTreeTestCase::AddContentNodes()
 		int y = 1 + (int)(height * rand() / (RAND_MAX + 1.0));
 		int c = 0;
 		baseCircleNode->ChangePosition(x, y, c);
-		allBaseCircleNodes.emplace(baseCircleNode->idx, baseCircleNode);
+		allBaseCircleNodes.emplace(baseCircleNode->Idx, baseCircleNode);
 		quadTree.AddCircleNode(baseCircleNode);
 	}
 }
@@ -59,8 +59,8 @@ void QuadTreeTestCase::SwapNodes(int idx1, int idx2)
 
 	int idxPositionX = allBaseCircleNodes[idx2]->positionX;
 	int idxPositionY = allBaseCircleNodes[idx2]->positionY;
-	allBaseCircleNodes[idx2]->ChangePosition(allBaseCircleNodes[idx1]->positionX, allBaseCircleNodes[idx1]->positionY, allBaseCircleNodes[idx2]->circle);
-	allBaseCircleNodes[idx1]->ChangePosition(idxPositionX, idxPositionY, allBaseCircleNodes[idx1]->circle);
+	allBaseCircleNodes[idx2]->ChangePosition(allBaseCircleNodes[idx1]->positionX, allBaseCircleNodes[idx1]->positionY, allBaseCircleNodes[idx2]->radius);
+	allBaseCircleNodes[idx1]->ChangePosition(idxPositionX, idxPositionY, allBaseCircleNodes[idx1]->radius);
 	quadTree.UpdateCircleNode(allBaseCircleNodes[idx1]);
 	quadTree.UpdateCircleNode(allBaseCircleNodes[idx2]);
 
@@ -93,7 +93,7 @@ void QuadTreeTestCase::DebugLog()
 			std::ostringstream stream;
 			for each (auto node in tree->rootNode.subNodes)
 			{
-				stream << node->idx << ",";
+				stream << node->Idx << ",";
 			}
 			
 			std::ostringstream stream1;

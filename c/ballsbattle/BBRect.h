@@ -1,4 +1,6 @@
 #pragma once
+#include "BBPoint.h"
+
 class BBRect
 {
 public:
@@ -7,6 +9,10 @@ public:
 	BBRect(const BBRect& other);
 	BBRect& operator= (const BBRect& other);
 	void setRect(int minX, int minY, int maxX, int maxY);
+
+	bool intersectsRect(const BBRect& rect) const;
+	bool intersectsCircle(const BBPoint& center, int radius) const;
+
 	~BBRect();
 
 	int GetMinX();

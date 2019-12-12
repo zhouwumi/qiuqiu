@@ -41,8 +41,10 @@ public:
 	
 	void GetAllHitCircleNodeIdxs(int treeIndex, std::vector<int>& idxs);
 	void GetAllHitCircleNodeIdxs(QuadTree* tree, std::vector<int>& idxs);
+	void GetAllHitCircleNodeIdxs(const BBRect& rect, std::vector<int>& idxs);
 
 	QuadType GetQuadType(BaseCircleNode* node);
+	QuadType GetQuadType(const BBRect& checkHit);
 
 	unsigned int GetCurrTreeId();
 	

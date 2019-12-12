@@ -1,8 +1,8 @@
 #include "QuadTree.h"
 
-#define MAX_DEPTH				4
+#define MAX_DEPTH				5
 #define QUAD_COUNT				5
-#define MAX_CIRCLE_COUNT		50
+#define MAX_CIRCLE_COUNT		20
 
 QuadTree::QuadTree():
 	depth(1),
@@ -183,12 +183,32 @@ void QuadTree::GetAllHitCircleNodeIdxs(QuadTree* tree, std::vector<int>& idxs)
 
 void QuadTree::GetAllHitCircleNodeIdxs(int treeIndex, std::vector<int>& idxs)
 {
-	if (this->mapTrees.find(treeIndex) == this->mapTrees.end())
+	if (this->rootTree->mapTrees.find(treeIndex) == this->rootTree->mapTrees.end())
 	{
 		return;
 	}
-	QuadTree* tree = this->mapTrees[treeIndex];
+	QuadTree* tree = this->rootTree->mapTrees[treeIndex];
 	GetAllHitCircleNodeIdxs(tree, idxs);
+}
+
+void QuadTree::GetAllHitCircleNodeIdxs(const BBRect& rect, std::vector<int>& idxs)
+{
+	if (subTrees.size() == 0)
+	{
+		GetAllHitCircleNodeIdxs(treeIdx, idxs);
+	}
+	else {
+		QuadType quadType = GetQuadType(rect);
+		if (quadType == QuadType::All)
+		{
+			GetAllHitCircleNodeIdxs(treeIdx, idxs);
+		}
+		else
+		{
+			QuadTree& subTree = subTrees[quadType];
+			subTree.GetAllHitCircleNodeIdxs(rect, idxs);
+		}
+	}
 }
 
 unsigned int QuadTree::GetCurrTreeId()
@@ -212,7 +232,7 @@ void QuadTree::_getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs)
 	const QuadNode& node = tree->rootNode;
 	for each (BaseCircleNode* BaseCircleNode in node.subNodes)
 	{
-		idxs.emplace_back(BaseCircleNode->idx);
+		idxs.emplace_back(BaseCircleNode->Idx);
 	}
 }
 
@@ -289,6 +309,49 @@ QuadType QuadTree::GetQuadType(BaseCircleNode* node)
 	}
 	return QuadType::All;
 
+}
+
+QuadType QuadTree::GetQuadType(const BBRect& checkHit)
+{
+	if (subTrees.size() != QuadType::MAX)
+	{
+		return QuadType::All;
+	}
+	int centerX = rect.centerX;
+	int centerY = rect.centerY;
+	if (checkHit.minY > centerY)
+	{
+		if (checkHit.minX >= centerX) {
+			return QuadType::UR;
+		}
+		else if (checkHit.maxX < centerX) {
+			return QuadType::UL;
+		}
+		else {
+			return QuadType::TOP;
+		}
+	}
+	else if (checkHit.maxY < centerY) {
+		if (checkHit.maxX <= centerX) {
+			return QuadType::BL;
+		}
+		else if (checkHit.minX > centerX) {
+			return QuadType::BR;
+		}
+		else {
+			return QuadType::BUTTOM;
+		}
+	}
+	else
+	{
+		if (checkHit.maxX <= centerX) {
+			return QuadType::LEFT;
+		}
+		else if (checkHit.minX >= centerX) {
+			return QuadType::RIGHT;
+		}
+	}
+	return QuadType::All;
 }
 
 BBRect QuadTree::_getRect(QuadType type)
