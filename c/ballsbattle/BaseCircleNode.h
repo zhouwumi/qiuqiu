@@ -14,6 +14,7 @@ public:
 
 	void ChangeTreeIdx(unsigned int newIdx);
 	virtual void ChangePosition(int x, int y, int c);
+	virtual void ChangePosition(int x, int y);
 
 	inline int GetRadius() const
 	{

@@ -29,6 +29,19 @@ void BaseCircleNode::ChangePosition(int x, int y, int c)
 	Location.y = y;
 }
 
+void BaseCircleNode::ChangePosition(int x, int y)
+{
+	positionX = x;
+	positionY = y;
+	minX = x - radius;
+	maxX = x + radius;
+	minY = y - radius;
+	maxY = y + radius;
+
+	Location.x = x;
+	Location.y = y;
+}
+
 void BaseCircleNode::ChangeTreeIdx(unsigned int newIdx)
 {
 	treeIndex = newIdx;

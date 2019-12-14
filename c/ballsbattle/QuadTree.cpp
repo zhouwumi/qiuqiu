@@ -150,7 +150,14 @@ void QuadTree::GetAllHitCircleNodeIdxs(QuadTree* tree, std::vector<int>& idxs)
 		{
 			for (int i = 0; i < tree->subTrees.size(); i++)
 			{
-				GetAllHitCircleNodeIdxs(&tree->subTrees[i], idxs);
+				if (i < QuadType::TOP)
+				{
+					GetAllHitCircleNodeIdxs(&tree->subTrees[i], idxs);
+				}
+				else
+				{
+					_getAllTreeNodeIdxs(&tree->subTrees[i], idxs);
+				}
 			}
 		}
 		else
@@ -185,6 +192,7 @@ void QuadTree::GetAllHitCircleNodeIdxs(int treeIndex, std::vector<int>& idxs)
 {
 	if (this->rootTree->mapTrees.find(treeIndex) == this->rootTree->mapTrees.end())
 	{
+		GetAllHitCircleNodeIdxs(rootTree, idxs);
 		return;
 	}
 	QuadTree* tree = this->rootTree->mapTrees[treeIndex];
@@ -238,20 +246,27 @@ void QuadTree::_getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs)
 
 void QuadTree::_splitTree()
 {
-	_buildSubTrees();
-	//将这个节点的内容分到子节点
-	std::vector<BaseCircleNode*> tempNodes = std::move(rootNode.subNodes);
-	rootNode.subNodes.clear();
-	for (int i = 0; i < tempNodes.size(); i++)
+	bool success = _buildSubTrees();
+	if (success)
 	{
-		BaseCircleNode* node = tempNodes[i];
-		AddCircleNode(node);
+		//将这个节点的内容分到子节点
+		std::vector<BaseCircleNode*> tempNodes = std::move(rootNode.subNodes);
+		rootNode.subNodes.clear();
+		for (int i = 0; i < tempNodes.size(); i++)
+		{
+			BaseCircleNode* node = tempNodes[i];
+			AddCircleNode(node);
+		}
 	}
 }
 
 bool QuadTree::_buildSubTrees()
 {
 	if (depth >= maxDepth)
+	{
+		return false;
+	}
+	if (this->treeType >= QuadType::TOP && this->treeType <= QuadType::RIGHT)
 	{
 		return false;
 	}
@@ -385,6 +400,10 @@ BBRect QuadTree::_getRect(QuadType type)
 		break;
 	default:
 		break;
+	}
+	if ((float)(rect.maxY - rect.minY) / (rect.maxX - rect.minX) > 3)
+	{
+		int i = 1;
 	}
 	return returnRect;
 }
