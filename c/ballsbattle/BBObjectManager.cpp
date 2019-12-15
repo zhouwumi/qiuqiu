@@ -63,5 +63,6 @@ PlayerNode* BBObjectManager::CreatePlayerNode(int uid, int mass, int cd, const B
 
 PlayerNode* BBObjectManager::CreatePlayerNode(int uid, int mass)
 {
+	mass = 100;
 	return CreatePlayerNode(uid, mass, 0, BBPoint::ZERO, BBVector::ZERO, BBVector::ZERO, BBVector::ZERO, BBVector::ZERO);
 }

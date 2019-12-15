@@ -343,8 +343,23 @@
 				"height":50,
 				"width":120
 			},
+			"hide":true,
 			"text":"检测玩家碰撞",
 			"fontSize":18
+		},
+		{
+			"type_name":"CCButton",
+			"name":"btnStartMove",
+			"pos":{
+				"x":"i50",
+				"y":"i338"
+			},
+			"size":{
+				"height":50,
+				"width":100
+			},
+			"text":"玩家移动",
+			"fontSize":16
 		}
 	]
 }

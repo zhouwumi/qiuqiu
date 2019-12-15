@@ -174,7 +174,59 @@ static int tolua_cocos2d_BBGameManager_GetPlayerNodeInfo(lua_State* tolua_S)
 	return 0;
 #endif
 }
-int tolua_cocos2d_BBGameManager_SetEatFoodCbFunction(lua_State* tolua_S)
+static int tolua_cocos2d_BBGameManager_GetSpikyInfo(lua_State* tolua_S)
+{
+	if (NULL == tolua_S)
+		return 0;
+
+	int argc = 0;
+	BBGameManager* self = nullptr;
+
+#if 1
+	tolua_Error tolua_err;
+	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
+#endif
+
+	self = static_cast<BBGameManager*>(tolua_tousertype(tolua_S, 1, 0));
+#if 1
+	if (nullptr == self) {
+		tolua_error(tolua_S, "invalid 'self' in function 'tolua_cocos2d_BBGameManager_GetSpikyInfo'\n", NULL);
+		return 0;
+	}
+#endif
+
+	argc = lua_gettop(tolua_S) - 1;
+
+	if (argc == 1)
+	{
+#if 1
+		if (!tolua_isnumber(tolua_S, 2, 1, &tolua_err))
+			goto tolua_lerror;
+#endif
+		float x = (float)tolua_tonumber(tolua_S, 2, 0);
+
+		SpikyBall* node = self->GetSpikyInfo(x);
+		if (node)
+		{
+			tolua_pushnumber(tolua_S, (lua_Number)node->positionX);
+			tolua_pushnumber(tolua_S, (lua_Number)node->positionY);
+			tolua_pushnumber(tolua_S, (lua_Number)node->radius);
+			return 3;
+		}
+		return 0;
+	}
+
+	luaL_error(tolua_S, "%s function in Node has wrong number of arguments: %d, was expecting %d\n", "BBGameManager:GetSpikyInfo", argc, 0);
+	return 0;
+
+#if 1
+	tolua_lerror:
+		tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_GetSpikyInfo'.", &tolua_err);
+	return 0;
+#endif
+}
+
+int tolua_cocos2d_BBGameManager_SetEatCbFunction(lua_State* tolua_S)
 {
 	int argc = 0;
 	bool ok = true;
@@ -200,25 +252,28 @@ int tolua_cocos2d_BBGameManager_SetEatFoodCbFunction(lua_State* tolua_S)
 
 		LUA_FUNCTION handler = toluafix_ref_function(tolua_S, 2, 0);
 
-		std::function<void(int)> arg1 = [handler](int hitIdx) {
+		std::function<void(int, int, int,int)> arg1 = [handler](int objType, int objIdx, int eatObjType, int eatObjIdx ) {
 			LuaStack* stack = LuaEngine::getInstance()->getLuaStack();
-			stack->pushInt(hitIdx);
-			stack->executeFunctionByHandler(handler, 1);
+			stack->pushInt(objType);
+			stack->pushInt(objIdx);
+			stack->pushInt(eatObjType);
+			stack->pushInt(eatObjIdx);
+			stack->executeFunctionByHandler(handler, 4);
 		};
-		cobj->SetEatFoodCbFunction(arg1);
+		cobj->SetEatCbFunction(arg1);
 		tolua_pushnumber(tolua_S, handler);
 		return 1;
 	}
-	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "cc.BBGameManager:SetHitCBFunction", argc, 1);
+	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "cc.BBGameManager:SetEatCbFunction", argc, 1);
 	return 0;
 #if 1
 	tolua_lerror:
-		tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_SetHitCBFunction'.", &tolua_err);
+		tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_SetEatCbFunction'.", &tolua_err);
 #endif
 	return 0;
 }
 
-int lua_cocos2dx_BBGameManager_RemoveEatFoodCbFunction(lua_State* tolua_S)
+int lua_cocos2dx_BBGameManager_RemoveEatCbFunction(lua_State* tolua_S)
 {
 	int argc = 0;
 	bool ok = true;
@@ -238,19 +293,19 @@ int lua_cocos2dx_BBGameManager_RemoveEatFoodCbFunction(lua_State* tolua_S)
 	if (argc == 1)
 	{
 		int handler;
-		ok &= luaval_to_int32(tolua_S, 2, &handler, "cc.BBGameManager:RemoveHitCBFunction");
+		ok &= luaval_to_int32(tolua_S, 2, &handler, "cc.BBGameManager:RemoveEatCbFunction");
 		LuaStack* stack = LuaEngine::getInstance()->getLuaStack();
 		stack->removeScriptHandler(handler);
 
-		cobj->RemoveEatFoodCbFunction();
+		cobj->RemoveEatCbFunction();
 		lua_settop(tolua_S, 1);
 		return 1;
 	}
-	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "cc.BBGameManager:RemoveHitCBFunction", argc, 1);
+	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "cc.BBGameManager:RemoveEatCbFunction", argc, 1);
 	return 0;
 #if 1
 	tolua_lerror:
-		tolua_error(tolua_S, "#ferror in function 'lua_cocos2dx_BBGameManager_RemoveHitCBFunction'.", &tolua_err);
+		tolua_error(tolua_S, "#ferror in function 'lua_cocos2dx_BBGameManager_RemoveEatCbFunction'.", &tolua_err);
 #endif
 	return 0;
 }
@@ -261,8 +316,10 @@ int extendBBGameManager(lua_State* tolua_S) {
 	if (lua_istable(tolua_S, -1))
 	{
 		tolua_function(tolua_S, "GetPlayerNodeInfo", tolua_cocos2d_BBGameManager_GetPlayerNodeInfo);
-		tolua_function(tolua_S, "SetEatFoodCbFunction", tolua_cocos2d_BBGameManager_SetEatFoodCbFunction);
-		tolua_function(tolua_S, "RemoveEatFoodCbFunction", lua_cocos2dx_BBGameManager_RemoveEatFoodCbFunction);
+		tolua_function(tolua_S, "GetSpikyInfo", tolua_cocos2d_BBGameManager_GetSpikyInfo);
+		
+		tolua_function(tolua_S, "SetEatCbFunction", tolua_cocos2d_BBGameManager_SetEatCbFunction);
+		tolua_function(tolua_S, "RemoveEatCbFunction", lua_cocos2dx_BBGameManager_RemoveEatCbFunction);
 	}
 	lua_pop(tolua_S, 1);
 

@@ -140,76 +140,34 @@ QuadTree*  QuadTree::FindTree(BaseCircleNode* node)
 	return NULL;
 }
 
-void QuadTree::GetAllHitCircleNodeIdxs(QuadTree* tree, std::vector<int>& idxs)
+void QuadTree::GetAllHitCircleNodeIdxs(std::vector<int>& idxs)
 {
-	
-	if (tree)
-	{
-		_getAllTreeNodeIdxs(tree, idxs);
-		if (tree->subTrees.size() > 0)
-		{
-			for (int i = 0; i < tree->subTrees.size(); i++)
-			{
-				if (i < QuadType::TOP)
-				{
-					GetAllHitCircleNodeIdxs(&tree->subTrees[i], idxs);
-				}
-				else
-				{
-					_getAllTreeNodeIdxs(&tree->subTrees[i], idxs);
-				}
-			}
-		}
-		else
-		{
-			QuadType treeType = tree->treeType;
-			switch (treeType)
-			{
-			case TOP:
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::UL], idxs);
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::UR], idxs);
-				break;
-			case BUTTOM:
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::BL], idxs);
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::BR], idxs);
-				break;
-			case LEFT:
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::UL], idxs);
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::BL], idxs);
-				break;
-			case RIGHT:
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::UR], idxs);
-				GetAllHitCircleNodeIdxs(&tree->parentTree->subTrees[QuadType::BR], idxs);
-				break;
-			default:
-				break;
-			}
-		}
-	}
+	_getAllParentNodeIdx(idxs);
+	_getAllSelfChildNodeIdx(idxs);	
 }
 
 void QuadTree::GetAllHitCircleNodeIdxs(int treeIndex, std::vector<int>& idxs)
 {
 	if (this->rootTree->mapTrees.find(treeIndex) == this->rootTree->mapTrees.end())
 	{
-		GetAllHitCircleNodeIdxs(rootTree, idxs);
 		return;
 	}
 	QuadTree* tree = this->rootTree->mapTrees[treeIndex];
-	GetAllHitCircleNodeIdxs(tree, idxs);
+	tree->GetAllHitCircleNodeIdxs(idxs);
 }
 
 void QuadTree::GetAllHitCircleNodeIdxs(const BBRect& rect, std::vector<int>& idxs)
 {
 	if (subTrees.size() == 0)
 	{
-		GetAllHitCircleNodeIdxs(treeIdx, idxs);
+		GetAllHitCircleNodeIdxs(idxs);
 	}
-	else {
+	else 
+	{
 		QuadType quadType = GetQuadType(rect);
 		if (quadType == QuadType::All)
 		{
-			GetAllHitCircleNodeIdxs(treeIdx, idxs);
+			GetAllHitCircleNodeIdxs(idxs);
 		}
 		else
 		{
@@ -226,7 +184,7 @@ unsigned int QuadTree::GetCurrTreeId()
 		return 1;
 	}
 	else {
-		return 8 * parentTree->treeIdx - 6 + treeType;
+		return 4 * parentTree->treeIdx - 2 + treeType;
 	}
 }
 
@@ -241,6 +199,27 @@ void QuadTree::_getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs)
 	for each (BaseCircleNode* BaseCircleNode in node.subNodes)
 	{
 		idxs.emplace_back(BaseCircleNode->Idx);
+	}
+}
+
+//所有父节点
+void QuadTree::_getAllParentNodeIdx(std::vector<int>& idxs)
+{
+	QuadTree* pTree = parentTree;
+	while (pTree)
+	{
+		_getAllTreeNodeIdxs(pTree, idxs);
+		pTree = pTree->parentTree;
+	}
+}
+
+//当前节点和所有子树节点
+void QuadTree::_getAllSelfChildNodeIdx(std::vector<int>& idxs)
+{
+	_getAllTreeNodeIdxs(this, idxs);
+	for (int i = 0; i < this->subTrees.size(); i++)
+	{
+		this->subTrees[i]._getAllSelfChildNodeIdx(idxs);
 	}
 }
 
@@ -266,10 +245,7 @@ bool QuadTree::_buildSubTrees()
 	{
 		return false;
 	}
-	if (this->treeType >= QuadType::TOP && this->treeType <= QuadType::RIGHT)
-	{
-		return false;
-	}
+	
 	subTrees.resize(QuadType::MAX);
 	for (int i = 0; i < QuadType::MAX; i++)
 	{
@@ -298,9 +274,6 @@ QuadType QuadTree::GetQuadType(BaseCircleNode* node)
 		else if (node->maxX < centerX) {
 			return QuadType::UL;
 		}
-		else {
-			return QuadType::TOP;
-		}
 	}
 	else if (node->maxY < centerY) {
 		if (node->maxX <= centerX) {
@@ -309,19 +282,8 @@ QuadType QuadTree::GetQuadType(BaseCircleNode* node)
 		else if (node->minX > centerX) {
 			return QuadType::BR;
 		}
-		else {
-			return QuadType::BUTTOM;
-		}
 	}
-	else
-	{
-		if (node->maxX <= centerX) {
-			return QuadType::LEFT;
-		}
-		else if (node->minX >= centerX) {
-			return QuadType::RIGHT;
-		}
-	}
+	
 	return QuadType::All;
 
 }
@@ -342,9 +304,6 @@ QuadType QuadTree::GetQuadType(const BBRect& checkHit)
 		else if (checkHit.maxX < centerX) {
 			return QuadType::UL;
 		}
-		else {
-			return QuadType::TOP;
-		}
 	}
 	else if (checkHit.maxY < centerY) {
 		if (checkHit.maxX <= centerX) {
@@ -353,19 +312,8 @@ QuadType QuadTree::GetQuadType(const BBRect& checkHit)
 		else if (checkHit.minX > centerX) {
 			return QuadType::BR;
 		}
-		else {
-			return QuadType::BUTTOM;
-		}
 	}
-	else
-	{
-		if (checkHit.maxX <= centerX) {
-			return QuadType::LEFT;
-		}
-		else if (checkHit.minX >= centerX) {
-			return QuadType::RIGHT;
-		}
-	}
+	
 	return QuadType::All;
 }
 
@@ -386,24 +334,8 @@ BBRect QuadTree::_getRect(QuadType type)
 	case BR:
 		returnRect.setRect(rect.centerX, rect.minY, rect.maxX, rect.centerY);
 		break;
-	case TOP:
-		returnRect.setRect(rect.minX, rect.centerY, rect.maxX, rect.maxY);
-		break;
-	case BUTTOM:
-		returnRect.setRect(rect.minX, rect.minY, rect.maxX, rect.centerY);
-		break;
-	case LEFT:
-		returnRect.setRect(rect.minX, rect.minY, rect.centerX, rect.maxY);
-		break;
-	case RIGHT:
-		returnRect.setRect(rect.centerX, rect.minY, rect.maxX, rect.maxY);
-		break;
 	default:
 		break;
-	}
-	if ((float)(rect.maxY - rect.minY) / (rect.maxX - rect.minX) > 3)
-	{
-		int i = 1;
 	}
 	return returnRect;
 }

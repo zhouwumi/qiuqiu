@@ -6,7 +6,8 @@
 #include "BBMathUtils.h"
 
 Player::Player(int id):
-	uid(id)
+	uid(id),
+	Stopped(true)
 {
 
 }

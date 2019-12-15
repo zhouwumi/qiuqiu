@@ -1550,6 +1550,49 @@ int lua_ccext_logic_BBGameManager_GetAllFoodInfos(lua_State* tolua_S)
 
     return 0;
 }
+
+int lua_ccext_logic_BBGameManager_GetAllSpikyInfos(lua_State* tolua_S)
+{
+	int argc = 0;
+	BBGameManager* cobj = nullptr;
+	bool ok = true;
+
+#if 1
+	tolua_Error tolua_err;
+#endif
+
+
+#if 1
+	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
+#endif
+
+	cobj = (BBGameManager*)tolua_tousertype(tolua_S, 1, 0);
+
+#if 1
+	if (!cobj)
+	{
+		tolua_error(tolua_S, "invalid 'cobj' in function 'lua_ccext_logic_BBGameManager_GetAllSpikyInfos'", nullptr);
+		return 0;
+	}
+#endif
+
+	argc = lua_gettop(tolua_S) - 1;
+	if (argc == 0)
+	{
+		std::vector<int> ret = cobj->GetAllSpikyInfos();
+		ccvector_int_to_luaval(tolua_S, ret);
+		return 1;
+	}
+	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d \n", "BBGameManager:GetAllSpikyInfos", argc, 2);
+	return 0;
+
+#if 1
+	tolua_lerror:
+		tolua_error(tolua_S, "#ferror in function 'lua_ccext_logic_BBGameManager_GetAllSpikyInfos'.", &tolua_err);
+#endif
+
+	return 0;
+}
 int lua_ccext_logic_BBGameManager_CheckPlayerHit(lua_State* tolua_S)
 {
     int argc = 0;
@@ -1600,6 +1643,58 @@ int lua_ccext_logic_BBGameManager_CheckPlayerHit(lua_State* tolua_S)
 
     return 0;
 }
+int lua_ccext_logic_BBGameManager_CheckSpikyHit(lua_State* tolua_S)
+{
+	int argc = 0;
+	BBGameManager* cobj = nullptr;
+	bool ok = true;
+
+#if 1
+	tolua_Error tolua_err;
+#endif
+
+
+#if 1
+	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
+#endif
+
+	cobj = (BBGameManager*)tolua_tousertype(tolua_S, 1, 0);
+
+#if 1
+	if (!cobj)
+	{
+		tolua_error(tolua_S, "invalid 'cobj' in function 'lua_ccext_logic_BBGameManager_CheckSpikyHit'", nullptr);
+		return 0;
+	}
+#endif
+
+	argc = lua_gettop(tolua_S) - 1;
+	if (argc == 2)
+	{
+		int arg0, arg1;
+
+		ok &= luaval_to_int32(tolua_S, 2, (int *)&arg0, "BBGameManager:CheckSpikyHit");
+		ok &= luaval_to_int32(tolua_S, 3, (int *)&arg1, "BBGameManager:CheckSpikyHit");
+		if (!ok)
+		{
+			tolua_error(tolua_S, "invalid arguments in function 'lua_ccext_logic_BBGameManager_CheckSpikyHit'", nullptr);
+			return 0;
+		}
+		cobj->CheckSpikyHit(arg0, arg1);
+		lua_settop(tolua_S, 1);
+		return 1;
+	}
+	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d \n", "BBGameManager:CheckSpikyHit", argc, 2);
+	return 0;
+
+#if 1
+	tolua_lerror:
+		tolua_error(tolua_S, "#ferror in function 'lua_ccext_logic_BBGameManager_CheckSpikyHit'.", &tolua_err);
+#endif
+
+	return 0;
+}
+
 int lua_ccext_logic_BBGameManager_GetPlayerNodeIdx(lua_State* tolua_S)
 {
     int argc = 0;
@@ -1805,6 +1900,56 @@ int lua_ccext_logic_BBGameManager_GetFoodPosByIdx(lua_State* tolua_S)
 
 	return 0;
 }
+int lua_ccext_logic_BBGameManager_StartMovePlayer(lua_State* tolua_S)
+{
+	int argc = 0;
+	BBGameManager* cobj = nullptr;
+	bool ok = true;
+
+#if 1
+	tolua_Error tolua_err;
+#endif
+
+
+#if 1
+	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
+#endif
+
+	cobj = (BBGameManager*)tolua_tousertype(tolua_S, 1, 0);
+
+#if 1
+	if (!cobj)
+	{
+		tolua_error(tolua_S, "invalid 'cobj' in function 'lua_ccext_logic_BBGameManager_StartMovePlayer'", nullptr);
+		return 0;
+	}
+#endif
+
+	argc = lua_gettop(tolua_S) - 1;
+	if (argc == 1)
+	{
+		int arg0;
+
+		ok &= luaval_to_int32(tolua_S, 2, (int *)&arg0, "BBGameManager:StartMovePlayer");
+		if (!ok)
+		{
+			tolua_error(tolua_S, "invalid arguments in function 'lua_ccext_logic_BBGameManager_StartMovePlayer'", nullptr);
+			return 0;
+		}
+		cobj->StartMovePlayer(arg0);
+		return 1;
+	}
+	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d \n", "BBGameManager:StartMovePlayer", argc, 2);
+	return 0;
+
+#if 1
+	tolua_lerror:
+		tolua_error(tolua_S, "#ferror in function 'lua_ccext_logic_BBGameManager_StartMovePlayer'.", &tolua_err);
+#endif
+
+	return 0;
+}
+
 int lua_ccext_logic_BBGameManager_OnUpdate(lua_State* tolua_S)
 {
 	int argc = 0;
@@ -1846,6 +1991,47 @@ int lua_ccext_logic_BBGameManager_OnUpdate(lua_State* tolua_S)
 
 	return 0;
 }
+int lua_ccext_logic_BBGameManager_DebugPrintLog(lua_State* tolua_S)
+{
+	int argc = 0;
+	BBGameManager* cobj = nullptr;
+	bool ok = true;
+
+#if 1
+	tolua_Error tolua_err;
+#endif
+
+
+#if 1
+	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
+#endif
+
+	cobj = (BBGameManager*)tolua_tousertype(tolua_S, 1, 0);
+
+#if 1
+	if (!cobj)
+	{
+		tolua_error(tolua_S, "invalid 'cobj' in function 'lua_ccext_logic_BBGameManager_DebugPrintLog'", nullptr);
+		return 0;
+	}
+#endif
+
+	argc = lua_gettop(tolua_S) - 1;
+	if (argc == 0)
+	{
+		cobj->DebugPrintLog();
+		return 1;
+	}
+	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d \n", "BBGameManager:DebugPrintLog", argc, 2);
+	return 0;
+
+#if 1
+	tolua_lerror:
+		tolua_error(tolua_S, "#ferror in function 'lua_ccext_logic_BBGameManager_DebugPrintLog'.", &tolua_err);
+#endif
+
+	return 0;
+}
 
 int lua_register_ccext_logic_BBGameManager(lua_State* tolua_S)
 {
@@ -1861,12 +2047,20 @@ int lua_register_ccext_logic_BBGameManager(lua_State* tolua_S)
 		tolua_function(tolua_S, "RemovePlayer", lua_ccext_logic_BBGameManager_RemovePlayer);
 		
         tolua_function(tolua_S,"GetAllFoodInfos", lua_ccext_logic_BBGameManager_GetAllFoodInfos);
+		tolua_function(tolua_S, "GetAllSpikyInfos", lua_ccext_logic_BBGameManager_GetAllSpikyInfos);
+		
         tolua_function(tolua_S,"CheckPlayerHit", lua_ccext_logic_BBGameManager_CheckPlayerHit);
+		tolua_function(tolua_S, "CheckSpikyHit", lua_ccext_logic_BBGameManager_CheckSpikyHit);
+		
         tolua_function(tolua_S,"GetPlayerNodeIdx", lua_ccext_logic_BBGameManager_GetPlayerNodeIdx);
 		tolua_function(tolua_S, "ChangePlayerNodePos", lua_ccext_logic_BBGameManager_ChangePlayerNodePos);
 		tolua_function(tolua_S, "GetFoodIdxByPos", lua_ccext_logic_BBGameManager_GetFoodIdxByPos);
 		tolua_function(tolua_S, "GetFoodPosByIdx", lua_ccext_logic_BBGameManager_GetFoodPosByIdx);
 		tolua_function(tolua_S, "OnUpdate", lua_ccext_logic_BBGameManager_OnUpdate);
+		tolua_function(tolua_S, "DebugPrintLog", lua_ccext_logic_BBGameManager_DebugPrintLog);
+		tolua_function(tolua_S, "StartMovePlayer", lua_ccext_logic_BBGameManager_StartMovePlayer);
+		
+		
     tolua_endmodule(tolua_S);
     std::string typeName = typeid(BBGameManager).name();
     g_luaType[typeName] = "BBGameManager";

@@ -2,6 +2,8 @@
 #include "BBConst.h"
 #include "BBMathUtils.h"
 #include<assert.h>
+#include <sstream>
+#include "cocos2d.h"
 
 BBGameManager* BBGameManager::s_sharedGameManager = nullptr;
 
@@ -80,6 +82,7 @@ void BBGameManager::InitRoom()
 	NodeTree.PreBuildAllSubTrees();
 
 	spikyRect.setRect(500, 500, BBConst::MaxWidth - 500, BBConst::MaxHeight - 500);
+	//spikyRect.setRect(100, 100, 1000, 700);
 
 	mapRect.setRect(0, 0, BBConst::MaxWidth, BBConst::MaxHeight);
 }
@@ -118,6 +121,17 @@ void BBGameManager::CreateSpiky()
 	SpikyBall* newSpikyBall = objectManager.CreateSpikyBall(x, y, mass);
 	mapSpikyBalls.emplace(newSpikyBall->Idx, newSpikyBall);
 	ObjectTree.AddCircleNode(newSpikyBall);
+}
+
+void BBGameManager::RemoveSpikyByIdx(int idx)
+{
+	if (mapSpikyBalls.find(idx) != mapSpikyBalls.end())
+	{
+		SpikyBall* ball = mapSpikyBalls[idx];
+		mapSpikyBalls.erase(idx);
+		ObjectTree.RemoveCircleNode(ball);
+		delete ball;
+	}
 }
 
 //*************食物部分****************//
@@ -263,17 +277,114 @@ void BBGameManager::OnUpdate()
 	std::vector<int> vec;
 	for each (auto iter in mapPlayers)
 	{
+		MovePlayer(iter.second);
+		vec.clear();
 		hitManager.GetCanEatFood(iter.first, vec);
 		if (vec.size() > 0)
 		{
-			for (int i = 0; i < vec.size(); i++)
+			for (int i = 0; i < vec.size(); i += 2)
 			{
-				RemoveFoodByIdx(vec[i]);
-				if (eatFoodCallback)
+				RemoveFoodByIdx(vec[i + 1]);
+				if (eatCallback)
 				{
-					eatFoodCallback(vec[i]);
+					eatCallback(Type_Food, vec[i + 1], Type_PlayerNode, vec[i]);
 				}
 			}
+		}
+
+		vec.clear();
+		hitManager.GetCanEatSpiky(iter.first, vec);
+		if (vec.size() > 0)
+		{
+			for (int i = 0; i < vec.size(); i+=2)
+			{
+				RemoveSpikyByIdx(vec[i + 1]);
+				if (eatCallback)
+				{
+					eatCallback(Type_Spiky, vec[i + 1], Type_PlayerNode, vec[i]);
+				}
+			}
+		}
+	}
+}
+
+
+//玩家移动
+void BBGameManager::MovePlayer(Player* player)
+{
+	std::vector<PlayerNode*>& allPlayerNodes = player->vecPlayerNodes;
+	if (allPlayerNodes.size() == 0)
+	{
+		player->Direction = BBVector::ZERO;
+		player->Stopped = true;
+		return;
+	}
+	player->UpdateFinalPoint(player->FinalPoint.x, player->FinalPoint.y);
+	BBPoint finalPoint = player->FinalPoint;
+
+	for (int i = 0; i < allPlayerNodes.size(); i++)
+	{
+		PlayerNode* node = allPlayerNodes[i];
+		BBPoint locVec = node->Location;
+		if (node->Init > 0)
+		{
+			BBVector moveVec = node->InitMove();
+			locVec.x += moveVec.x;
+			locVec.y += moveVec.y;
+		}
+		else
+		{
+			if (node->Current != BBVector::ZERO)
+			{
+				locVec.x += node->Current.x;
+				locVec.y += node->Current.y;
+				if (node->FromLocation.x <= finalPoint.x && locVec.x >= finalPoint.x)
+				{
+					locVec.x = finalPoint.x;
+				}
+				if (node->FromLocation.x >= finalPoint.x && locVec.x <= finalPoint.x)
+				{
+					locVec.x = finalPoint.x;
+				}
+
+				if (node->FromLocation.y <= finalPoint.y && locVec.y >= finalPoint.y)
+				{
+					locVec.y = finalPoint.y;
+				}
+				if (node->FromLocation.y >= finalPoint.y && locVec.y <= finalPoint.y)
+				{
+					locVec.y = finalPoint.y;
+				}
+			}
+		}
+
+		bool isFixedX, isFixedY;
+		int fixedX, fixedY;
+		BBMathUtils::FixCircle(mapRect, locVec.x, locVec.y, node->radius, fixedX, fixedY, isFixedX, isFixedY);
+		node->ChangePosition(fixedX, fixedY);
+		NodeTree.UpdateCircleNode(node);
+	}
+
+	for (int i = 0; i < player->vecPlayerNodes.size(); i++)
+	{
+		PlayerNode* node = player->vecPlayerNodes[i];
+		if (node->Init > 0)
+		{
+			node->Init -= 1;
+			if (node->Init == 0)
+			{
+				node->SetSpeedVec(player->FinalPoint.x - node->Location.x, player->FinalPoint.y - node->Location.y);
+				node->Delta = BBVector::ZERO;
+				node->Final = node->Current;
+			}
+		}
+		if (node->Cd > 0)
+		{
+			node->Cd -= 1;
+		}
+		if (node->Protect > 0)
+		{
+			node->Protect -= 1;
 		}
 	}
 }
@@ -289,6 +400,16 @@ std::vector<int> BBGameManager::GetAllFoodInfos()
 	return ret;
 }
 
+std::vector<int> BBGameManager::GetAllSpikyInfos()
+{
+	std::vector<int> ret;
+	for each (auto iter in mapSpikyBalls)
+	{
+		ret.emplace_back(iter.first);
+	}
+	return ret;
+}
+
 int BBGameManager::GetFoodIdxByPos(int pos)
 {
 	return mapFoodPos[pos]->Idx;
@@ -297,6 +418,16 @@ int BBGameManager::GetFoodIdxByPos(int pos)
 int BBGameManager::GetFoodPosByIdx(int idx)
 {
 	return mapFoodIdxs[idx]->posKey;
+}
+
+SpikyBall* BBGameManager::GetSpikyInfo(int idx)
+{
+	auto iter = mapSpikyBalls.find(idx);
+	if (iter == mapSpikyBalls.end())
+	{
+		return NULL;
+	}
+	return (*iter).second;
 }
 
 std::vector<int> BBGameManager::GetPlayerNodeIdx(int uid)
@@ -340,4 +471,70 @@ void BBGameManager::ChangePlayerNodePos(int idx, int x, int y)
 	PlayerNode* node = mapPlayNodes[idx];
 	node->ChangePosition(x, y, node->radius);
 	NodeTree.UpdateCircleNode(node);
+}
+
+//测试代码
+void BBGameManager::CheckSpikyHit(int idx1, int idx2)
+{
+	SpikyBall* ball_1 = mapSpikyBalls[idx1];
+	SpikyBall* ball_2 = mapSpikyBalls[idx2];
+	hitManager.CheckHitSpiky(ball_1, ball_2);
+}
+
+void BBGameManager::DebugPrintLog()
+{
+	std::vector<const QuadTree*> trees;
+	trees.emplace_back(&ObjectTree);
+
+	std::vector<const QuadTree*> copyTrees;
+	while (trees.size() > 0)
+	{
+		for (int i = 0; i < trees.size(); i++)
+		{
+			const QuadTree* tree = trees[i];
+
+			for each (const QuadTree& subTree in tree->subTrees)
+			{
+				copyTrees.emplace_back(&subTree);
+			}
+
+			std::ostringstream stream1;
+			for each (auto node in tree->rootNode.subNodes)
+			{
+				stream1 << node->Idx << ",";
+			}
+
+			std::ostringstream stream2;
+			stream2 << tree->treeIdx;
+
+			const QuadTree* tempTree = tree;
+			while (!tempTree->isRoot)
+			{
+				stream2 << " <-- " << tempTree->parentTree->treeIdx;
+				tempTree = tempTree->parentTree;
+			}
+			
+			std::string str1 = stream1.str();
+			std::string str2 = stream2.str();
+			
+			cocos2d::log("nodes = %s , treeId = %s", str1.c_str(),  str2.c_str());
+		}
+
+		trees.clear();
+		trees = std::move(copyTrees);
+		copyTrees.clear();
+	}
+}
+
+void BBGameManager::StartMovePlayer(int uid)
+{
+	if (mapPlayers.find(uid) == mapPlayers.end())
+	{
+		return;
+	}
+	Player* player = mapPlayers[uid];
+	for (int i = 0; i < player->vecPlayerNodes.size(); i++)
+	{
+		player->vecPlayerNodes[i]->Current.SetPoint(5, 5);
+	}
 }

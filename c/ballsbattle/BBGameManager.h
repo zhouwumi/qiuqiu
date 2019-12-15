@@ -20,6 +20,7 @@ public:
 
 	//刺球
 	void CreateSpiky();
+	void RemoveSpikyByIdx(int idx);
 
 	//玩家
 	void CreatePlayer(int uid);
@@ -30,9 +31,8 @@ public:
 
 	//每帧更新
 	void OnUpdate();
-
+	
 	PlayerNode* SpawnPlayerNode();
-
 	static BBGameManager* getInstance();
 	void destroyInstance();
 protected:
@@ -41,26 +41,35 @@ protected:
 	static BBGameManager* s_sharedGameManager;
 public:
 	std::vector<int> GetAllFoodInfos();
+	std::vector<int> GetAllSpikyInfos();
 	int GetFoodIdxByPos(int pos);
 	int GetFoodPosByIdx(int idx);
+	SpikyBall* GetSpikyInfo(int idx);
 	std::vector<int> GetPlayerNodeIdx(int uid);
 	PlayerNode* GetPlayerNodeInfo(int idx);
 	std::vector<int> CheckPlayerHit(int uid);
 	void ChangePlayerNodePos(int idx, int x, int y);
 
-	void SetEatFoodCbFunction(std::function<void(int)> eatFunc)
+	void CheckSpikyHit(int idx1, int idx2);
+
+	void SetEatCbFunction(std::function<void(int, int, int, int)> eatFunc)
 	{
-		eatFoodCallback = eatFunc;
+		eatCallback = eatFunc;
 	}
-	void RemoveEatFoodCbFunction()
+	void RemoveEatCbFunction()
 	{
-		eatFoodCallback = NULL;
+		eatCallback = NULL;
 	}
+
+	void DebugPrintLog();
+
+	void StartMovePlayer(int uid);
 
 private:
 	//玩家部分
 	void _updatePlayerCenter(int uid);
-
+	//玩家移动
+	void MovePlayer(Player* player);
 public:
 	std::unordered_map<unsigned int, PlayerNode*> mapPlayNodes; //玩家的球
 	std::unordered_map<unsigned int, Player*> mapPlayers;//玩家
@@ -79,6 +88,7 @@ public:
 	BBRect spikyRect; //刺球生成的范围
 	BBRect mapRect;  //整个地图的范围
 private:
-	std::function<void(int)> eatFoodCallback;
+	//obj_type, obj_idx, eat_obj_type, eat_obj_idx
+	std::function<void(int, int, int, int)> eatCallback;
 };
 

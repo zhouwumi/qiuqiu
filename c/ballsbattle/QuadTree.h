@@ -14,11 +14,7 @@ enum QuadType
 	UR = 1,//up-right
 	BL = 2,//buttom-left
 	BR = 3,//buttom_right
-	TOP = 4,
-	BUTTOM = 5,
-	LEFT = 6,
-	RIGHT = 7,
-	MAX = 8,
+	MAX = 4,
 };
 
 class QuadTree
@@ -40,7 +36,7 @@ public:
 	QuadTree* FindTree(BaseCircleNode* node); //寻找所在的树
 	
 	void GetAllHitCircleNodeIdxs(int treeIndex, std::vector<int>& idxs);
-	void GetAllHitCircleNodeIdxs(QuadTree* tree, std::vector<int>& idxs);
+	void GetAllHitCircleNodeIdxs(std::vector<int>& idxs);
 	void GetAllHitCircleNodeIdxs(const BBRect& rect, std::vector<int>& idxs);
 
 	QuadType GetQuadType(BaseCircleNode* node);
@@ -51,7 +47,9 @@ public:
 private:
 	BBRect _getRect(QuadType type);
 	//获取树下的所有圆信息的idx
-	void _getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs); 
+	void _getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs);
+	void _getAllParentNodeIdx(std::vector<int>& idxs);
+	void _getAllSelfChildNodeIdx(std::vector<int>& idxs);
 	void _splitTree(); //分子树
 	bool _buildSubTrees(); //构建子树
 

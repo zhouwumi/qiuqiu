@@ -1,5 +1,6 @@
 #pragma once
 #include"BBMovingBall.h"
+#include "BBVector.h"
 #include<vector>
 
 class PlayerNode : public MovingBall
@@ -36,6 +37,8 @@ public:
 public:
 	std::vector<PlayerNode*> vecPlayerNodes;
 	int uid;
+	bool Stopped;
 	BBPoint FromPoint;
 	BBPoint FinalPoint;
+	BBVector Direction;
 };

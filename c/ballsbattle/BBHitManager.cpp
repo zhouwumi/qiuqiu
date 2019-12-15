@@ -34,6 +34,31 @@ void BBHitManager::GetCanEatFood(PlayerNode* playerNode, std::vector<int>& vec)
 			int deltaY = playerNode->positionY - foodY;
 			if (pow(deltaX, 2) + pow(deltaY, 2) <= pow(playerNode->radius, 2))
 			{
+				vec.emplace_back(playerNode->Idx);
+				vec.emplace_back(idx);
+			}
+		}
+	}
+}
+
+void BBHitManager::GetCanEatSpiky(PlayerNode* playerNode, std::vector<int>& vec)
+{
+	TempVec.clear();
+	gameManager->ObjectTree.GetAllHitCircleNodeIdxs(playerNode->treeIndex, TempVec);
+	for (int i = 0; i < TempVec.size(); i++)
+	{
+		int idx = TempVec[i];
+		if (gameManager->mapSpikyBalls.find(idx) != gameManager->mapSpikyBalls.end())
+		{
+			SpikyBall* ball = gameManager->mapSpikyBalls[idx];
+			int foodX = ball->positionX;
+			int foodY = ball->positionY;
+
+			int deltaX = playerNode->positionX - foodX;
+			int deltaY = playerNode->positionY - foodY;
+			if (pow(deltaX, 2) + pow(deltaY, 2) <= pow(playerNode->radius - ball->radius, 2))
+			{
+				vec.emplace_back(playerNode->Idx);
 				vec.emplace_back(idx);
 			}
 		}
@@ -52,6 +77,18 @@ void BBHitManager::GetCanEatFood(Player* player, std::vector<int>& vec)
 	}
 }
 
+void BBHitManager::GetCanEatSpiky(Player* player, std::vector<int>& vec)
+{
+	if (!player)
+	{
+		return;
+	}
+	for each (PlayerNode* node in player->vecPlayerNodes)
+	{
+		GetCanEatSpiky(node, vec);
+	}
+}
+
 void BBHitManager::GetCanEatFood(int playerId, std::vector<int>& vec)
 {
 	auto iter = gameManager->mapPlayers.find(playerId);
@@ -60,6 +97,16 @@ void BBHitManager::GetCanEatFood(int playerId, std::vector<int>& vec)
 		return;
 	}
 	GetCanEatFood((*iter).second, vec);
+}
+
+void BBHitManager::GetCanEatSpiky(int playerId, std::vector<int>& vec)
+{
+	auto iter = gameManager->mapPlayers.find(playerId);
+	if (iter == gameManager->mapPlayers.end())
+	{
+		return;
+	}
+	GetCanEatSpiky((*iter).second, vec);
 }
 
 void BBHitManager::FindFreeSpikyPos(int& returnMass, int& returnX, int& returnY)
@@ -79,8 +126,9 @@ void BBHitManager::FindFreeSpikyPos(int& returnMass, int& returnX, int& returnY)
 		TempRect.setRect(fixedX - radius, fixedY - radius, fixedX + radius, fixedY + radius);
 		TempVec.clear();
 		gameManager->ObjectTree.GetAllHitCircleNodeIdxs(TempRect, TempVec);
-
+		bool hasHit = false;
 		if (TempVec.size() > 0) {
+			
 			for (int j = 0; j < TempVec.size(); j++)
 			{
 				int idx = TempVec[j];
@@ -91,20 +139,47 @@ void BBHitManager::FindFreeSpikyPos(int& returnMass, int& returnX, int& returnY)
 					SpikyBall* checkBall = gameManager->mapSpikyBalls[idx];
 					if (BBMathUtils::CheckCircleHit(*checkBall, TempRect.centerX, TempRect.centerY, radius))
 					{
-						returnMass = mass;
-						returnX = fixedX;
-						returnY = fixedY;
-						hasFind = true;
+						hasHit = true;
 						break;
 					}
 				}
 			}
 		}
-		else {
+		
+		if (!hasHit)
+		{
 			returnMass = mass;
 			returnX = fixedX;
 			returnY = fixedY;
 			hasFind = true;
+		}
+	}
+}
+
+//²âÊÔ´úÂë
+void BBHitManager::CheckHitSpiky(SpikyBall* ball1, SpikyBall* ball2)
+{
+	BBRect TempRect;
+	TempRect.setRect(ball1->minX, ball1->minY, ball1->maxX, ball1->maxY);
+	TempVec.clear();
+	gameManager->ObjectTree.GetAllHitCircleNodeIdxs(TempRect, TempVec);
+	if (TempVec.size() > 0) {
+		for (int j = 0; j < TempVec.size(); j++)
+		{
+			int idx = TempVec[j];
+			if (gameManager->mapSpikyBalls.find(idx) == gameManager->mapSpikyBalls.end()) {
+				assert("when generate spiky has spiky in tree, but not in map %d", idx);
+			}
+			else {
+				SpikyBall* checkBall = gameManager->mapSpikyBalls[idx];
+				if (checkBall == ball2) {
+					int temp = 1;
+				}
+				if (BBMathUtils::CheckCircleHit(*checkBall, TempRect.centerX, TempRect.centerY, ball1->radius))
+				{
+					int temp2 = 1;
+				}
+			}
 		}
 	}
 }

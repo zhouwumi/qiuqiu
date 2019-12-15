@@ -3,6 +3,13 @@
 #define BB_M_PI       3.14159265358979323846
 #define BB_MATH_TOLERANCE              2e-37f
 
+enum ObjectType
+{
+	Type_PlayerNode = 1,
+	Type_Food = 2,
+	Type_Spiky = 3,
+};
+
 class BBConst
 {
 public:

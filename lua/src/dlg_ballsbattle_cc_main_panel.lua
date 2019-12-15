@@ -3,6 +3,10 @@ Panel = g_panel_mgr.new_panel_class('ballsbattle_cc/ballsbattle_cc_main_panel')
 local constant_ballsbattle = g_conf_mgr.get_constant('constant_ballsbattle')
 local Live2DSprite = import('ballsbattle_cc_live_2d').Live2DSprite
 
+local Type_PlayerNode = 1
+local Type_Food = 2
+local Type_Spiky = 3
+
 function Panel:init_panel()
     self.winW, self.winH = self.bgLayer:GetContentSize()
 	self.bgLayer:SetEnableCascadeOpacityRecursion(true)
@@ -17,17 +21,21 @@ function Panel:_initGame()
     self.manager = manager
     manager:InitRoom()
     manager:InitFood()
-    self.hitHandle = manager:SetEatFoodCbFunction(function(foodIdx)
-        self:_onEatFood(foodIdx)
+    self.hitHandle = manager:SetEatCbFunction(function(removeObjType, removeObjIdx, eatObjType, eatObjIdx)
+        self:_onEatObj(removeObjType, removeObjIdx, eatObjType, eatObjIdx)
     end)
 
     self.foodContainer = cc.Node:create()
     self.bg_container:AddChild(nil, self.foodContainer)
 
+    self.spikyContainer = cc.Node:create()
+    self.bg_container:AddChild(nil, self.spikyContainer)
+
     self.playerContainer = cc.Node:create()
     self.bg_container:AddChild(nil, self.playerContainer)
 
     self.bgLayer.OnBegin = function(pos)
+        print(pos)
         self:_tryMovePlayer(pos)
         return true
     end
@@ -58,6 +66,10 @@ function Panel:_initGame()
     self.btnControPlayer.OnClick = function()
         self:_controllerPlayer()
     end
+    self.btnStartMove.OnClick = function()
+        self:StartMovePlayer()
+    end
+
     self.currentPlayerIdx = 1
 
     local frame = 0
@@ -67,7 +79,16 @@ function Panel:_initGame()
         local time1 = utils_get_tick()
         self.manager:OnUpdate()
         local time2 = utils_get_tick()
-        self:_updateBgPosition()
+
+        if self.currentPlayerNode then
+            local playerNodeIdxs = self.manager:GetPlayerNodeIdx(self.currentPlayerIdx)
+            -- print("playerNodeIdxs:  ", playerNodeIdxs)
+            for _, idx in ipairs(playerNodeIdxs) do
+                local x, y, radius = self.manager:GetPlayerNodeInfo(idx)
+                self.currentPlayerNode:SetPosition(x, y)
+            end
+        end
+        -- self:_updateBgPosition()
         return 1 / 30
     end)
 end
@@ -92,13 +113,12 @@ end
 function Panel:_testAddPlayer()
 	self.manager:CreatePlayer(self.currentPlayerIdx)
     local playerNodeIdxs = self.manager:GetPlayerNodeIdx(self.currentPlayerIdx)
-    print("playerNodeIdxs:  ", playerNodeIdxs)
+    -- print("playerNodeIdxs:  ", playerNodeIdxs)
     for _, idx in ipairs(playerNodeIdxs) do
         local x, y, radius = self.manager:GetPlayerNodeInfo(idx)
-        print(x, y, radius)
+        -- print(x, y, radius)
         local node = cc.Node:create()
         local avatorSp = Live2DSprite:New("ball_1",'breathe')
-        print(avatorSp == nil)
         node:AddChild(nil, avatorSp.sp)
         node:SetPosition(x, y)
         node:setScale(radius / 50)
@@ -119,8 +139,9 @@ end
 function Panel:_generateFood()
     local allFoods = self.manager:GetAllFoodInfos()
     self.foodMap = {}
+    local foodTemplate = g_uisystem.load_template('ballsbattle_cc/balls_food')
     for _, value  in ipairs(allFoods) do
-        local food = g_uisystem.load_template_create('ballsbattle_cc/balls_food')
+        local food = g_uisystem.create_item(foodTemplate)
         food.bg:DelayCall(math.random() * 2, function() 
             local opacityRandom = math.random(100,255)
             food.bg:setOpacity(opacityRandom)
@@ -139,6 +160,24 @@ function Panel:_generateFood()
         local idx = self.manager:GetFoodIdxByPos(value)
         food.label:SetString(tostring(idx))
         self.foodMap[idx] = food
+    end
+
+    self.spikyMap = {}
+    local spikyTemplate = g_uisystem.load_template('ballsbattle_cc/balls_spiky')
+    local allSpikys = self.manager:GetAllSpikyInfos()
+    for _, value in ipairs(allSpikys) do
+        local x, y, radius = self.manager:GetSpikyInfo(value)
+        local node = g_uisystem.create_item(spikyTemplate)
+        node:SetPosition(x, y)
+        node:setScale(radius / 50)
+        self.spikyContainer:AddChild(nil, node)
+        node.nodeIdx = value
+        node.mask.OnClick = function()
+            print("cick spliky ", value)
+            node.label:setVisible(not node.label:isVisible())
+        end
+        node.label:SetString(tostring(value))
+        self.spikyMap[value] = node
     end
 end
 
@@ -165,6 +204,10 @@ function Panel:_tryMovePlayer(pos)
     end
 end
 
+function Panel:StartMovePlayer()
+    self.manager:StartMovePlayer(self.currentPlayerIdx)
+end
+
 function Panel:_onPlayerPosChange()
     -- local hitResults = self.manager:CheckPlayerHit(self.currentPlayerIdx)
     -- print(hitResults)
@@ -174,21 +217,34 @@ function Panel:_checkPlayerHit()
     
 end
 
-function Panel:_onEatFood(foodIdx)
-    print("eat food frame: ", self.frame, " foodIdx: ", foodIdx)
-    if not self.foodMap[foodIdx] then
-        error("eat food but lua has not this food idx:  ", foodIdx)
-    else
-        local food = self.foodMap[foodIdx]
-        self.foodMap[foodIdx] = nil
-        food:removeFromParent()
+
+function Panel:_onEatObj(removeObjType, removeObjIdx, eatObjType, eatObjIdx)
+    print("eat obj frame: ", self.frame, "obj ", removeObjIdx, " eat by player ", eatObjIdx)
+
+    if removeObjType == Type_Food  then
+        if not self.foodMap[removeObjIdx] then
+            error("eat food but lua has not this food idx:  ", removeObjIdx)
+        else
+            local food = self.foodMap[removeObjIdx]
+            self.foodMap[removeObjIdx] = nil
+            food:removeFromParent()
+        end
+    elseif removeObjType == Type_Spiky then
+        if not self.spikyMap[removeObjIdx] then
+            error("eat spiky but lua has not this spiky idx:  ", removeObjIdx)
+        else
+            local spiky = self.spikyMap[removeObjIdx]
+            self.spikyMap[removeObjIdx] = nil
+            spiky:removeFromParent()
+        end
     end
+    
 end
 
 function Panel:on_before_destroy()
     if cc.BBGameManager then
         if self.hitHandle then
-            cc.BBGameManager:getInstance():RemoveEatFoodCbFunction(self.hitHandle)
+            cc.BBGameManager:getInstance():RemoveEatCbFunction(self.hitHandle)
             self.hitHandle = nil
         end
         
