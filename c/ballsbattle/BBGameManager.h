@@ -1,94 +1,106 @@
-#pragma once
+#ifndef BB_GAME_MANAGER_CPP
+#define BB_GAME_MANAGER_CPP
 #include<unordered_map>
 #include"BBPlayerNode.h"
 #include"QuadTree.h"
 #include "BBHitManager.h"
 #include "BBObjectManager.h"
+#include "BBPlayerManager.h"
 #include<functional>
+#include "GridMap.h"
+#include "BBFrameCacheManager.h"
+#include "BBFoodSpikyManager.h"
+#include "BBSporeManager.h"
 
 class BBGameManager
 {
 public:
-	//³õÊ¼»¯·¿¼ä
-	void InitRoom();
-	void InitFood();
-
-	//foodÊ³Îï
-	void CreateFood();
-	void RemoveFoodByIdx(int idx);
-	void RemoveFoodByPos(int posKey);
-
-	//´ÌÇò
-	void CreateSpiky();
-	void RemoveSpikyByIdx(int idx);
-
-	//Íæ¼Ò
-	void CreatePlayer(int uid);
-	//¸øÕâ¸öÍæ¼Ò¼ÓÒ»¸öÇò
-	void CreatePlayerNode(int uid);
-	void RemovePlayer(int uid);
-	void RemovePlayerNode(int uid, int nodeIdx, bool removeFromVec = true);
-
-	//Ã¿Ö¡¸üĞÂ
-	void OnUpdate();
-	
-	PlayerNode* SpawnPlayerNode();
-	static BBGameManager* getInstance();
-	void destroyInstance();
-protected:
+	static BBGameManager* Create();
+	static void Destory(BBGameManager* manager);
 	BBGameManager();
 	~BBGameManager();
-	static BBGameManager* s_sharedGameManager;
-public:
+
+	/***********************commonæ¥å£***********************/
+
+	void InitRoom();
+
+	//æ¯å¸§æ›´æ–°
+	void OnUpdate();
+	void EndUpdate();
+
+	//åŒæ­¥å„ç§æ“ä½œ
+	void AddOperatePlayerJoin(int uid);//ç©å®¶åŠ å…¥
+	void AddOperatePlayerSplit(int uid);//ç©å®¶åˆ†è£‚
+	void AddOperateMove(int uid, int angle, int percent);//æ”¹å˜è¿åŠ¨æ–¹å‘
+	void AddOperatePlayerQuit(int uid);
+	void AddOperatePlayerShoot(int uid);
+
+	int GetGameFrame()
+	{
+		return gameFrame;
+	}
+	bool isKeyFrame();
+	/***********************commonæ¥å£***********************/
+
+	/***********************serveræ¥å£***********************/	
+
+	void InitFoodSpiky();
+
+	/***********************serveræ¥å£***********************/
+
+
+	/***********************clientæ¥å£***********************/
+
+	//å®¢æˆ·ç«¯åˆšè¿›æ¥éœ€è¦åˆ›å»ºæ‰€æœ‰çš„é£Ÿç‰©å’Œåˆºçƒ
+	//return:å¦‚æœä¸æ˜¯ä¸€å¼€å§‹è°ƒç”¨ä¼šè¿”å›false
+	bool ClientFinishGenerateFoodAndSpiky();
+	//å®¢æˆ·ç«¯æä¾›çš„ç”Ÿæˆé£Ÿç‰©çš„æ¥å£,çœŸå®ç¯å¢ƒä¸ç”¨æ­¤æ¥å£
+	std::vector<int> ClientGenerateFood(int num);
+	std::vector<int> ClientGenerateSpiky(int num);
+
+	std::vector<int> GetFrameNewPlayer();
+	std::vector<int> GetFrameNewPlayerNodeIdxs();
+	std::vector<int> GetFrameRemovedPlayerNodeIdxs();
+	std::vector<int> GetFrameNewFood();
+	std::vector<int> GetFrameNewSpiky();
+	std::vector<int> GetFrameNewSpore();
+	std::vector<int> GetFrameEatResult()
+	{
+		return eatResults;
+	}
+	//ä¿¡æ¯è·å–
 	std::vector<int> GetAllFoodInfos();
 	std::vector<int> GetAllSpikyInfos();
 	int GetFoodIdxByPos(int pos);
 	int GetFoodPosByIdx(int idx);
+	Spore* GetSporeInfo(int idx);
 	SpikyBall* GetSpikyInfo(int idx);
-	std::vector<int> GetPlayerNodeIdx(int uid);
 	PlayerNode* GetPlayerNodeInfo(int idx);
-	std::vector<int> CheckPlayerHit(int uid);
-	void ChangePlayerNodePos(int idx, int x, int y);
+	std::vector<int> GetPlayerNodeIdx(int uid);
 
-	void CheckSpikyHit(int idx1, int idx2);
+	void AddOperateNewFood(int idx, int posKey);
+	void AddOperateNewSpiky(int idx, int posKey, int mass);
 
-	void SetEatCbFunction(std::function<void(int, int, int, int)> eatFunc)
-	{
-		eatCallback = eatFunc;
-	}
-	void RemoveEatCbFunction()
-	{
-		eatCallback = NULL;
-	}
-
-	void DebugPrintLog();
-
-	void StartMovePlayer(int uid);
+	/***********************clientæ¥å£***********************/
 
 private:
-	//Íæ¼Ò²¿·Ö
-	void _updatePlayerCenter(int uid);
-	//Íæ¼ÒÒÆ¶¯
-	void MovePlayer(Player* player);
-public:
-	std::unordered_map<unsigned int, PlayerNode*> mapPlayNodes; //Íæ¼ÒµÄÇò
-	std::unordered_map<unsigned int, Player*> mapPlayers;//Íæ¼Ò
-	std::unordered_map<unsigned int, Spore*> mapSpores;//æß×Ó
-	std::unordered_map<unsigned int, Food*> mapFoodPos;//Ê³ÎïÎ»ÖÃkey
-	std::unordered_map<unsigned int, Food*> mapFoodIdxs;//Ê³Îïidx key
-	std::unordered_map<unsigned int, SpikyBall*> mapSpikyBalls;//´ÌÇò
+	void _AddNodesCd();
 
-	QuadTree ObjectTree; //æß×Ó,´ÌÇò
-	QuadTree FoodTree; //Ê³Îï
-	QuadTree NodeTree; //Íæ¼ÒµÄÇò
+public:
+	std::unordered_map<unsigned int, Spore*> mapSpores;//å­¢å­	
+	QuadTree NodeTree; //ç©å®¶çš„çƒ
 
 	BBHitManager hitManager;
 	BBObjectManager objectManager;
-
-	BBRect spikyRect; //´ÌÇòÉú³ÉµÄ·¶Î§
-	BBRect mapRect;  //Õû¸öµØÍ¼µÄ·¶Î§
+	BBPlayerManager playerManager;
+	BBFrameCacheManager frameCacheManager;
+	BBFoodSpikyManager foodSpikyManager;
+	BBSporeManager sporeManager;
+	BBRect spikyRect; //åˆºçƒç”Ÿæˆçš„èŒƒå›´
+	BBRect mapRect;  //æ•´ä¸ªåœ°å›¾çš„èŒƒå›´
 private:
-	//obj_type, obj_idx, eat_obj_type, eat_obj_idx
-	std::function<void(int, int, int, int)> eatCallback;
+	std::vector<int> eatResults;
+	int gameFrame;
 };
 
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_HIT_MANAGER_CPP
+#define BB_HIT_MANAGER_CPP
 
 #include "BBPlayerNode.h"
 
@@ -15,12 +16,12 @@ public:
 		gameManager = manager;
 	}
 
-	//Íæ¼Ò³ÔÊ³Îï
+	//ç©å®¶åƒé£Ÿç‰©
 	void GetCanEatFood(PlayerNode* playerNode, std::vector<int>& vec);
 	void GetCanEatFood(Player* player, std::vector<int>& vec);
 	void GetCanEatFood(int playerId, std::vector<int>& vec);
 
-	//ÕÒµ½Ò»¸ö¿ÕÏĞµÄ´ÌÇòÎ»ÖÃ,ÒªÇó²»ÄÜºÍÆäËû´ÌÇò,æß×ÓÅö×²
+	//æ‰¾åˆ°ä¸€ä¸ªç©ºé—²çš„åˆºçƒä½ç½®,è¦æ±‚ä¸èƒ½å’Œå…¶ä»–åˆºçƒ,å­¢å­ç¢°æ’
 	void FindFreeSpikyPos(int& returnMass, int& returnX, int& returnY);
 	bool FindFreeFoodPos(int& returnX, int& returnY);
 	void FindFreePlayerNodePos(int radius, int& returnX, int& returnY);
@@ -29,9 +30,14 @@ public:
 	void GetCanEatSpiky(Player* player, std::vector<int>& vec);
 	void GetCanEatSpiky(int playerId, std::vector<int>& vec);
 
-	void CheckHitSpiky(SpikyBall* ball1, SpikyBall* ball2);
+	void GetCanEatNodeOrSpore(PlayerNode* playerNode, std::vector<int>& nodeIdxs, std::vector<int>& sporeIdxs);
+private:
+	void _tryEatNode(PlayerNode* playerNode, PlayerNode* targetNode, std::vector<int>& nodeIdxs);
+	void _tryEatSpore(PlayerNode* playerNode, Spore* targetSpore, std::vector<int>& nodeIdxs);
 private:
 	BBGameManager* gameManager;
 	std::vector<int> TempVec;
 };
+
+#endif
 

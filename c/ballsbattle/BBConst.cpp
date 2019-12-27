@@ -1,6 +1,10 @@
 #include "BBConst.h"
 
 const int BBConst::FPS = 30;
+const int BBConst::SyncFPS = 5;
+const int BBConst::FixFps = 5;
+const int BBConst::FixLength = 50;
+const int BBConst::SpikyTime = 60;
 
 const int BBConst::MaxHeight = 4500;
 const int BBConst::MaxWidth = 4500;
@@ -20,7 +24,7 @@ const int BBConst::GameTime = 15;
 const int BBConst::FoodNum = 600;
 const int BBConst::FoodMass = 1;
 const int BBConst::MergeCD = 400;
-const int BBConst::SpikyNum = 5;
+const int BBConst::SpikyNum = 30;
 const int BBConst::DeltaBase = 100;
 const int BBConst::Delta = 5;
 const int BBConst::ShootMinMass = 20;

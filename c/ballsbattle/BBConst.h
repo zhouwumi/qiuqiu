@@ -1,6 +1,7 @@
-#pragma once
+#ifndef BB_CONST_CPP
+#define BB_CONST_CPP
 
-#define BB_M_PI       3.14159265358979323846
+#define BB_M_PI       3.14159
 #define BB_MATH_TOLERANCE              2e-37f
 
 enum ObjectType
@@ -8,6 +9,7 @@ enum ObjectType
 	Type_PlayerNode = 1,
 	Type_Food = 2,
 	Type_Spiky = 3,
+	Type_Spore = 4
 };
 
 class BBConst
@@ -18,6 +20,9 @@ public:
 
 public:
 	static const int FPS;
+	static const int SyncFPS;
+	static const int FixFps;
+	static const int FixLength;
 
 	static const int MaxHeight;
 	static const int MaxWidth;
@@ -56,5 +61,8 @@ public:
 
 	static const int MinPartition;
 	static const int MaxPartition;
+
+	static const int SpikyTime;
 };
 
+#endif

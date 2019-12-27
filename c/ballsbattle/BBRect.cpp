@@ -1,6 +1,6 @@
 #include "BBRect.h"
-
-#include<math.h>
+#include "BBMathUtils.h"
+#include "math.h"
 
 BBRect::BBRect()
 {
@@ -40,11 +40,11 @@ bool BBRect::intersectsRect(const BBRect& rect) const
 
 bool BBRect::intersectsCircle(const BBPoint& center, int radius) const
 {
-	int w = abs(centerX - minX);
-	int h = abs(centerY - minY);
+	int w = BBMathUtils::abs_int(centerX - minX);
+	int h = BBMathUtils::abs_int(centerY - minY);
 
-	int dx = abs(centerX - center.x);
-	int dy = abs(centerY - center.y);
+	int dx = BBMathUtils::abs_int(centerX - center.x);
+	int dy = BBMathUtils::abs_int(centerY - center.y);
 
 	if (dx > (radius + w) || dy > (radius + h))
 	{
@@ -85,8 +85,5 @@ int BBRect::GetCenterY()
 	return centerY;
 }
 
-BBRect::~BBRect()
-{
-}
 
 const BBRect BBRect::ZERO = BBRect(0, 0, 0, 0);

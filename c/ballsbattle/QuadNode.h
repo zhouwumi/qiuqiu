@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_QUAD_NODE_CPP
+#define BB_QUAD_NODE_CPP
 
 #include"BaseCircleNode.h"
 #include "BBRect.h"
@@ -20,3 +21,5 @@ public:
 	std::vector<BaseCircleNode*> subNodes;
 	QuadTree* tree;
 };
+
+#endif

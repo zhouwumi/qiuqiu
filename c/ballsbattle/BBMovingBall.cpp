@@ -1,11 +1,17 @@
 #include "BBMovingBall.h"
 #include "BBMathUtils.h"
+#include<math.h>
+
 MovingBall::MovingBall():
 	Init(0),
 	FromId(0),
 	speed(0)
 {
-
+	FromLocation = BBPoint::ZERO;
+	Direction = BBVector::ZERO;
+	Current = BBVector::ZERO;
+	Delta = BBVector::ZERO;
+	Final = BBVector::ZERO;
 }
 MovingBall::~MovingBall()
 {
@@ -66,7 +72,23 @@ Spore::~Spore()
 {
 
 }
-BBVector Spore::InitMove()
+BBVector& Spore::InitMove()
 {
-	return BBVector::ZERO;
+	initSpeed -= initDeltaSpeed;
+	BBVector temp = BBVector::GetFixedVetor2(Direction, initSpeed);
+	Current = temp;
+	Final = Current;
+	return Current;
+}
+
+void Spore::CalculateInitMoveParams(int radius, int frame, float initSpeed, int finalSpeed)
+{
+	float init = initSpeed;
+	float _final = finalSpeed;
+	float delta = fabs((finalSpeed - initSpeed) / frame);
+	delta = radius / float(frame * (frame - 1) / 2) + delta;
+	init = _final + frame * delta;
+
+	this->initSpeed = init;
+	this->initDeltaSpeed = delta;
 }

@@ -43,7 +43,7 @@ float BBVector::GetAngle()
 	float result = 180 * atan2f(this->y, this->x) / BB_M_PI;
 	if (result < 0)
 	{
-		result + 360;
+		result += 360;
 	}
 	return result;
 }
@@ -54,7 +54,7 @@ BBVector BBVector::GetFixedVetor2(BBVector v, float length)
 	{
 		return BBVector::ZERO;
 	}
-	float radian;
+	/*float radian;
 	float absRadian = atan2f(fabs(v.y), fabs(v.x));
 	if (v.x >= 0 && v.y >= 0) {
 		radian = absRadian;
@@ -68,7 +68,13 @@ BBVector BBVector::GetFixedVetor2(BBVector v, float length)
 	else {
 		radian = 2 * BB_M_PI - absRadian;
 	}
-	return BBVector(cosf(radian) * length, sinf(radian) * length);
+	return BBVector(cosf(radian) * length, sinf(radian) * length);*/
+	float vLen = sqrtf(v.x * v.x + v.y * v.y);
+	float xRate = v.x / vLen;
+	float yRate = v.y / vLen;
+	int x = xRate * length;
+	int y = yRate * length;
+	return BBVector(x, y);
 }
 
 BBVector BBVector::GetDeltaVector(BBVector startVec, BBVector endVec, int frame)

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_PLAYER_NODE_CPP
+#define BB_PLAYER_NODE_CPP
 #include"BBMovingBall.h"
 #include "BBVector.h"
 #include<vector>
@@ -11,17 +12,14 @@ public:
 
 	void ChangeCd(int timeDelta);
 
-	//´ÌÇò·ÖÁÑ
-	void SpikySplit(int maxChildNode, int spikyMass, std::vector<PlayerNode*>& newPlayerNodes);
-	PlayerNode* SelfSplit();
 	BBVector& InitMove();
 	void CalculateInitMoveParams(int radius, int frame, float initSpeed, int finalSpeed);
 
 public:
 	int Uid;
-	int Cd;//²»ÄÜÈÚºÏµÄCD
-	int Protect;//¸Õ³öÉúµÄÇò²»ÄÜ±»³ÔºÍ²»ÄÜ³Ô±ğÈËµÄCD
-	//³õÊ¼µÄÒ»Ğ©²ÎÊı¼ÇÂ¼		
+	int Cd;//ä¸èƒ½èåˆçš„CD
+	int Protect;//åˆšå‡ºç”Ÿçš„çƒä¸èƒ½è¢«åƒå’Œä¸èƒ½åƒåˆ«äººçš„CD
+	//åˆå§‹çš„ä¸€äº›å‚æ•°è®°å½•		
 	float initSpeed;
 	float initDeltaSpeed;
 };
@@ -34,11 +32,20 @@ public:
 
 	void ResetPoint(int x, int y);
 	void UpdateFinalPoint(int x, int y);
+
+	BBRect GetGroupRect();
+	void RemoveMass();
 public:
 	std::vector<PlayerNode*> vecPlayerNodes;
+
+	int Respawn;
 	int uid;
 	bool Stopped;
 	BBPoint FromPoint;
 	BBPoint FinalPoint;
 	BBVector Direction;
+	BBPoint RectCenter;
+	int NMass;
 };
+
+#endif

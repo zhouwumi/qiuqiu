@@ -24,6 +24,7 @@ void QuadNode::InsertCircleNode(BaseCircleNode* node)
 
 void QuadNode::RemoveCircleNode(BaseCircleNode* node)
 {
+	int size = subNodes.size();
 	for (auto iter = subNodes.begin(); iter != subNodes.end(); iter++)
 	{
 		if (*iter == node)

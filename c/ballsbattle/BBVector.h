@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_VECTOR_CPP
+#define BB_VECTOR_CPP
 class BBVector
 {
 public:
@@ -41,7 +42,7 @@ public:
 
 	inline BBVector operator/(float s) const;
 
-	inline bool operator==(const BBVector& v) const;
+	 bool operator==(const BBVector& v) const;
 	 bool operator!=(const BBVector& v) const;
 
 	void SetPoint(float _x, float _y);
@@ -52,3 +53,4 @@ public:
 	float y;
 };
 
+#endif

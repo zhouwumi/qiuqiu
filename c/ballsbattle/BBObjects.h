@@ -1,6 +1,7 @@
-#pragma once
+#ifndef BB_OBJECTS_CPP
+#define BB_OBJECTS_CPP
 #include"BaseCircleNode.h"
-//Ê³Îï
+//é£Ÿç‰©
 class Food : public BaseCircleNode
 {
 public:
@@ -10,7 +11,7 @@ public:
 	unsigned int posKey;
 };
 
-//Çò
+//çƒ
 class BaseBall :public BaseCircleNode
 {
 public:
@@ -30,10 +31,12 @@ public:
 	int FromMass;
 };
 
-//´ÌÇò
+//åˆºçƒ
 class SpikyBall : public BaseBall
 {
 public:
 	SpikyBall();
 	~SpikyBall();
 };
+
+#endif

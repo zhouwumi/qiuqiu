@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_QUAD_TREE_CPP
+#define BB_QUAD_TREE_CPP
 
 #include "BBRect.h"
 #include "BaseCircleNode.h"
@@ -26,14 +27,14 @@ public:
 	void SetCustomMaxNodeInQuad(int _maxCircleInQuad);
 	void SetCustomMaxDepth(int _maxDepth);
 
-	void PreBuildAllSubTrees(); //Ò»¿ªÊ¼¾Í¹¹½¨Íê³ÉËùÓĞµÄ
-	void OnBuildFinish(QuadTree* parentTree); //Ê÷¹¹½¨Íê³É ĞèÒªÖ÷¶¯µ÷
+	void PreBuildAllSubTrees(); //ä¸€å¼€å§‹å°±æ„å»ºå®Œæˆæ‰€æœ‰çš„
+	void OnBuildFinish(QuadTree* parentTree); //æ ‘æ„å»ºå®Œæˆ éœ€è¦ä¸»åŠ¨è°ƒ
 
-	void AddCircleNode(BaseCircleNode* node); //Ìí¼ÓĞÂµÄ½Úµã
+	void AddCircleNode(BaseCircleNode* node); //æ·»åŠ æ–°çš„èŠ‚ç‚¹
 	void RemoveCircleNode(BaseCircleNode* node);
-	void UpdateCircleNode(BaseCircleNode* node); //¸üĞÂÕâ¸ö½ÚµãÔÚÄÇ¿ÃÊ÷
+	void UpdateCircleNode(BaseCircleNode* node); //æ›´æ–°è¿™ä¸ªèŠ‚ç‚¹åœ¨é‚£æ£µæ ‘
 
-	QuadTree* FindTree(BaseCircleNode* node); //Ñ°ÕÒËùÔÚµÄÊ÷
+	QuadTree* FindTree(BaseCircleNode* node); //å¯»æ‰¾æ‰€åœ¨çš„æ ‘
 	
 	void GetAllHitCircleNodeIdxs(int treeIndex, std::vector<int>& idxs);
 	void GetAllHitCircleNodeIdxs(std::vector<int>& idxs);
@@ -46,12 +47,12 @@ public:
 	
 private:
 	BBRect _getRect(QuadType type);
-	//»ñÈ¡Ê÷ÏÂµÄËùÓĞÔ²ĞÅÏ¢µÄidx
+	//è·å–æ ‘ä¸‹çš„æ‰€æœ‰åœ†ä¿¡æ¯çš„idx
 	void _getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs);
 	void _getAllParentNodeIdx(std::vector<int>& idxs);
 	void _getAllSelfChildNodeIdx(std::vector<int>& idxs);
-	void _splitTree(); //·Ö×ÓÊ÷
-	bool _buildSubTrees(); //¹¹½¨×ÓÊ÷
+	void _splitTree(); //åˆ†å­æ ‘
+	bool _buildSubTrees(); //æ„å»ºå­æ ‘
 
 public:
 	unsigned int treeIdx;
@@ -68,6 +69,8 @@ private:
 	BBRect rect;
 	int depth;
 
-	int maxCircleInQuad; //Ã¿¸ö½Úµã´æ´¢µÄ×î´óÊıÁ¿
+	int maxCircleInQuad; //æ¯ä¸ªèŠ‚ç‚¹å­˜å‚¨çš„æœ€å¤§æ•°é‡
 	int maxDepth;
 };
+
+#endif

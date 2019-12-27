@@ -1,4 +1,6 @@
-#pragma once
+#ifndef BASE_CIRCLE_NODE_CPP
+#define BASE_CIRCLE_NODE_CPP
+
 #include "BBPoint.h"
 #include "BBRect.h"
 
@@ -46,3 +48,4 @@ public:
 	int maxY;
 };
 
+#endif

@@ -109,10 +109,10 @@ void QuadTree::UpdateCircleNode(BaseCircleNode* node)
 {
 	if (!isRoot)
 	{
-		_ASSERT("invalid tree call UpdateBaseCircleNode");
+		// _ASSERT("invalid tree call UpdateBaseCircleNode");
 		return;
 	}
-	//version1:ÏÈÕâÃ´¼òµ¥µÄÒÆ³ıÔÙ²åÈë°É¡£»¹ÓĞÓÅ»¯¿Õ¼ä
+	//version1:å…ˆè¿™ä¹ˆç®€å•çš„ç§»é™¤å†æ’å…¥å§ã€‚è¿˜æœ‰ä¼˜åŒ–ç©ºé—´
 	RemoveCircleNode(node);
 	AddCircleNode(node);
 }
@@ -196,13 +196,13 @@ void QuadTree::_getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs)
 		return;
 	}
 	const QuadNode& node = tree->rootNode;
-	for each (BaseCircleNode* BaseCircleNode in node.subNodes)
+	for (BaseCircleNode* BaseCircleNode : node.subNodes)
 	{
 		idxs.emplace_back(BaseCircleNode->Idx);
 	}
 }
 
-//ËùÓĞ¸¸½Úµã
+//æ‰€æœ‰çˆ¶èŠ‚ç‚¹
 void QuadTree::_getAllParentNodeIdx(std::vector<int>& idxs)
 {
 	QuadTree* pTree = parentTree;
@@ -213,7 +213,7 @@ void QuadTree::_getAllParentNodeIdx(std::vector<int>& idxs)
 	}
 }
 
-//µ±Ç°½ÚµãºÍËùÓĞ×ÓÊ÷½Úµã
+//å½“å‰èŠ‚ç‚¹å’Œæ‰€æœ‰å­æ ‘èŠ‚ç‚¹
 void QuadTree::_getAllSelfChildNodeIdx(std::vector<int>& idxs)
 {
 	_getAllTreeNodeIdxs(this, idxs);
@@ -228,7 +228,7 @@ void QuadTree::_splitTree()
 	bool success = _buildSubTrees();
 	if (success)
 	{
-		//½«Õâ¸ö½ÚµãµÄÄÚÈİ·Öµ½×Ó½Úµã
+		//å°†è¿™ä¸ªèŠ‚ç‚¹çš„å†…å®¹åˆ†åˆ°å­èŠ‚ç‚¹
 		std::vector<BaseCircleNode*> tempNodes = std::move(rootNode.subNodes);
 		rootNode.subNodes.clear();
 		for (int i = 0; i < tempNodes.size(); i++)

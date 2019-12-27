@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_POINT_CPP
+#define BB_POINT_CPP
 class BBPoint
 {
 public:
@@ -13,3 +14,5 @@ public:
 	int x;
 	int y;
 };
+
+#endif

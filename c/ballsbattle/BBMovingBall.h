@@ -1,7 +1,8 @@
-#pragma once
+#ifndef BB_MOVING_BALL_CPP
+#define BB_MOVING_BALL_CPP
 #include"BBObjects.h"
 #include"BBVector.h"
-// ÒÆ¶¯µÄÇò
+// ç§»åŠ¨çš„çƒ
 class MovingBall : public BaseBall
 {
 public:
@@ -29,25 +30,31 @@ public:
 	void Stop();
 
 public:
-	int Init; //Í£ÏÂÀ´½µÎª0µÄÖ¡Êı
-	int FromId; //´ÓÄÄ¸öÇò·ÖÁÑ³öÀ´
-	BBPoint FromLocation; //ÉÏÒ»Ö¡µÄÎ»ÖÃ
-	BBVector Direction; //µ±Ç°µÄ·½Ïò
-	BBVector Current;//µ±Ç°µÄËÙ¶È
-	BBVector Delta;//µ±Ç°µÄ¼ÓËÙ¶È
-	BBVector Final;//Ä¿±êËÙ¶È
-	double speed;//ËÙ¶ÈÏòÁ¿µÄ³¤¶È
+	int Init; //åœä¸‹æ¥é™ä¸º0çš„å¸§æ•°
+	int FromId; //ä»å“ªä¸ªçƒåˆ†è£‚å‡ºæ¥
+	BBPoint FromLocation; //ä¸Šä¸€å¸§çš„ä½ç½®
+	BBVector Direction; //å½“å‰çš„æ–¹å‘
+	BBVector Current;//å½“å‰çš„é€Ÿåº¦
+	BBVector Delta;//å½“å‰çš„åŠ é€Ÿåº¦
+	BBVector Final;//ç›®æ ‡é€Ÿåº¦
+	double speed;//é€Ÿåº¦å‘é‡çš„é•¿åº¦
 };
 
-//æß×Ó
+//å­¢å­
 class Spore : public MovingBall
 {
 public:
 	Spore();
 	~Spore();
-	BBVector InitMove();
+	BBVector& InitMove();
+	void CalculateInitMoveParams(int radius, int frame, float initSpeed, int finalSpeed);
 
 public:
 	int Uid;
 	int Cd;
+	//åˆå§‹çš„ä¸€äº›å‚æ•°è®°å½•		
+	float initSpeed;
+	float initDeltaSpeed;
 };
+
+#endif

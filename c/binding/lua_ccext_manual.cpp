@@ -35,90 +35,90 @@ using namespace live2d;
 
 int lua_cocos2dx_DrawNode3D_drawCube(lua_State* L)
 {
-    int argc = 0;
-    cocos2d::DrawNode3D* cobj = nullptr;
-    bool ok  = true;
-    
+	int argc = 0;
+	cocos2d::DrawNode3D* cobj = nullptr;
+	bool ok = true;
+
 #if 1
-    tolua_Error tolua_err;
+	tolua_Error tolua_err;
 #endif
-    
-    
+
+
 #if 1
-    if (!tolua_isusertype(L,1,"cc.DrawNode3D",0,&tolua_err)) goto tolua_lerror;
+	if (!tolua_isusertype(L, 1, "cc.DrawNode3D", 0, &tolua_err)) goto tolua_lerror;
 #endif
-    
-    cobj = (cocos2d::DrawNode3D*)tolua_tousertype(L,1,0);
-    
+
+	cobj = (cocos2d::DrawNode3D*)tolua_tousertype(L, 1, 0);
+
 #if 1
-    if (!cobj)
-    {
-        tolua_error(L,"invalid 'cobj' in function 'lua_cocos2dx_DrawNode3D_drawCube'", nullptr);
-        return 0;
-    }
+	if (!cobj)
+	{
+		tolua_error(L, "invalid 'cobj' in function 'lua_cocos2dx_DrawNode3D_drawCube'", nullptr);
+		return 0;
+	}
 #endif
-    
-    argc = lua_gettop(L)-1;
-    if (argc == 2)
-    {
-        std::vector<cocos2d::Vec3> arg0;
-        cocos2d::Color4F arg1;
-        Vec3 vec3;
+
+	argc = lua_gettop(L) - 1;
+	if (argc == 2)
+	{
+		std::vector<cocos2d::Vec3> arg0;
+		cocos2d::Color4F arg1;
+		Vec3 vec3;
 #if 1
-        if (!tolua_istable(L, 2, 0, &tolua_err))
-            goto tolua_lerror;
+		if (!tolua_istable(L, 2, 0, &tolua_err))
+			goto tolua_lerror;
 #endif
-        size_t size = lua_objlen(L, 2);
-        for (int i = 0; i < size; i++)
-        {
-            lua_pushnumber(L, i + 1);
-            lua_gettable(L, 2);
+		size_t size = lua_objlen(L, 2);
+		for (int i = 0; i < size; i++)
+		{
+			lua_pushnumber(L, i + 1);
+			lua_gettable(L, 2);
 #if 1
-            if (!tolua_istable(L, -1, 0, &tolua_err))
-            {
-                lua_pop(L, 1);
-                goto tolua_lerror;
-            }
+			if (!tolua_istable(L, -1, 0, &tolua_err))
+			{
+				lua_pop(L, 1);
+				goto tolua_lerror;
+			}
 #endif
-            ok &= luaval_to_vec3(L, lua_gettop(L), &vec3);
-            
+			ok &= luaval_to_vec3(L, lua_gettop(L), &vec3);
+
 #if 1
-            if (!ok)
-            {
-                lua_pop(L, 1);
-                goto tolua_lerror;
-            }
+			if (!ok)
+			{
+				lua_pop(L, 1);
+				goto tolua_lerror;
+			}
 #endif
-            //arg0[i] = vec3;
-            arg0.push_back(vec3);
-            lua_pop(L, 1);
-        }
-        
-        ok &=luaval_to_color4f(L, 3, &arg1, "cc.DrawNode3D:drawCube");
-        if(!ok)
-            return 0;
-        cobj->drawCube(&arg0[0], arg1);
-        return 0;
-    }
-    CCLOG("%s has wrong number of arguments: %d, was expecting %d \n", "cc.DrawNode3D:drawCube",argc, 2);
-    return 0;
-    
+			//arg0[i] = vec3;
+			arg0.push_back(vec3);
+			lua_pop(L, 1);
+		}
+
+		ok &= luaval_to_color4f(L, 3, &arg1, "cc.DrawNode3D:drawCube");
+		if (!ok)
+			return 0;
+		cobj->drawCube(&arg0[0], arg1);
+		return 0;
+	}
+	CCLOG("%s has wrong number of arguments: %d, was expecting %d \n", "cc.DrawNode3D:drawCube", argc, 2);
+	return 0;
+
 #if 1
-tolua_lerror:
-    tolua_error(L,"#ferror in function 'lua_cocos2dx_DrawNode3D_drawCube'.",&tolua_err);
+	tolua_lerror:
+				tolua_error(L, "#ferror in function 'lua_cocos2dx_DrawNode3D_drawCube'.", &tolua_err);
 #endif
-    
-    return 0;
+
+				return 0;
 }
 
 int extendDrawNode3D(lua_State* tolua_S) {
 	lua_pushstring(tolua_S, "cc.DrawNode3D");
-	lua_rawget(tolua_S,LUA_REGISTRYINDEX);
-    if (lua_istable(tolua_S,-1))
-    {
+	lua_rawget(tolua_S, LUA_REGISTRYINDEX);
+	if (lua_istable(tolua_S, -1))
+	{
 		tolua_function(tolua_S, "drawCube", lua_cocos2dx_DrawNode3D_drawCube);
-    }
-    lua_pop(tolua_S, 1);
+	}
+	lua_pop(tolua_S, 1);
 
 	return 1;
 }
@@ -159,7 +159,7 @@ static int tolua_cocos2d_BBGameManager_GetPlayerNodeInfo(lua_State* tolua_S)
 		{
 			tolua_pushnumber(tolua_S, (lua_Number)node->positionX);
 			tolua_pushnumber(tolua_S, (lua_Number)node->positionY);
-			tolua_pushnumber(tolua_S, (lua_Number)node->radius);
+			tolua_pushnumber(tolua_S, (lua_Number)node->mass);
 			return 3;
 		}
 		return 0;
@@ -170,8 +170,8 @@ static int tolua_cocos2d_BBGameManager_GetPlayerNodeInfo(lua_State* tolua_S)
 
 #if 1
 	tolua_lerror:
-		tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_GetPlayerNodeInfo'.", &tolua_err);
-	return 0;
+				tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_GetPlayerNodeInfo'.", &tolua_err);
+				return 0;
 #endif
 }
 static int tolua_cocos2d_BBGameManager_GetSpikyInfo(lua_State* tolua_S)
@@ -221,94 +221,66 @@ static int tolua_cocos2d_BBGameManager_GetSpikyInfo(lua_State* tolua_S)
 
 #if 1
 	tolua_lerror:
-		tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_GetSpikyInfo'.", &tolua_err);
-	return 0;
+				tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_GetSpikyInfo'.", &tolua_err);
+				return 0;
 #endif
 }
-
-int tolua_cocos2d_BBGameManager_SetEatCbFunction(lua_State* tolua_S)
+static int tolua_cocos2d_BBGameManager_GetSporeInfo(lua_State* tolua_S)
 {
+	if (NULL == tolua_S)
+		return 0;
+
 	int argc = 0;
-	bool ok = true;
-	BBGameManager* cobj = nullptr;
+	BBGameManager* self = nullptr;
+
 #if 1
 	tolua_Error tolua_err;
-#endif
-
-#if 1
 	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
 #endif
 
-	cobj = (BBGameManager*)tolua_tousertype(tolua_S, 1, 0);
+	self = static_cast<BBGameManager*>(tolua_tousertype(tolua_S, 1, 0));
+#if 1
+	if (nullptr == self) {
+		tolua_error(tolua_S, "invalid 'self' in function 'tolua_cocos2d_BBGameManager_GetSporeInfo'\n", NULL);
+		return 0;
+	}
+#endif
 
 	argc = lua_gettop(tolua_S) - 1;
 
 	if (argc == 1)
 	{
 #if 1
-		if (!toluafix_isfunction(tolua_S, 2, "LUA_FUNCTION", 0, &tolua_err))
+		if (!tolua_isnumber(tolua_S, 2, 1, &tolua_err))
 			goto tolua_lerror;
 #endif
+		float x = (float)tolua_tonumber(tolua_S, 2, 0);
 
-		LUA_FUNCTION handler = toluafix_ref_function(tolua_S, 2, 0);
-
-		std::function<void(int, int, int,int)> arg1 = [handler](int objType, int objIdx, int eatObjType, int eatObjIdx ) {
-			LuaStack* stack = LuaEngine::getInstance()->getLuaStack();
-			stack->pushInt(objType);
-			stack->pushInt(objIdx);
-			stack->pushInt(eatObjType);
-			stack->pushInt(eatObjIdx);
-			stack->executeFunctionByHandler(handler, 4);
-		};
-		cobj->SetEatCbFunction(arg1);
-		tolua_pushnumber(tolua_S, handler);
-		return 1;
+		Spore* node = self->GetSporeInfo(x);
+		if (node)
+		{
+			tolua_pushnumber(tolua_S, (lua_Number)node->positionX);
+			tolua_pushnumber(tolua_S, (lua_Number)node->positionY);
+			tolua_pushnumber(tolua_S, (lua_Number)node->radius);
+			return 3;
+		}
+		return 0;
 	}
-	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "cc.BBGameManager:SetEatCbFunction", argc, 1);
+
+	luaL_error(tolua_S, "%s function in Node has wrong number of arguments: %d, was expecting %d\n", "BBGameManager:GetSporeInfo", argc, 0);
 	return 0;
+
 #if 1
 	tolua_lerror:
-		tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_SetEatCbFunction'.", &tolua_err);
+				tolua_error(tolua_S, "#ferror in function 'tolua_cocos2d_BBGameManager_GetSporeInfo'.", &tolua_err);
+				return 0;
 #endif
-	return 0;
 }
-
-int lua_cocos2dx_BBGameManager_RemoveEatCbFunction(lua_State* tolua_S)
+int get_cost22(timeval time1, timeval time2)
 {
-	int argc = 0;
-	bool ok = true;
-	BBGameManager* cobj = nullptr;
-#if 1
-	tolua_Error tolua_err;
-#endif
-
-#if 1
-	if (!tolua_isusertype(tolua_S, 1, "BBGameManager", 0, &tolua_err)) goto tolua_lerror;
-#endif
-
-	cobj = (BBGameManager*)tolua_tousertype(tolua_S, 1, 0);
-
-	argc = lua_gettop(tolua_S) - 1;
-
-	if (argc == 1)
-	{
-		int handler;
-		ok &= luaval_to_int32(tolua_S, 2, &handler, "cc.BBGameManager:RemoveEatCbFunction");
-		LuaStack* stack = LuaEngine::getInstance()->getLuaStack();
-		stack->removeScriptHandler(handler);
-
-		cobj->RemoveEatCbFunction();
-		lua_settop(tolua_S, 1);
-		return 1;
-	}
-	luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d\n ", "cc.BBGameManager:RemoveEatCbFunction", argc, 1);
-	return 0;
-#if 1
-	tolua_lerror:
-		tolua_error(tolua_S, "#ferror in function 'lua_cocos2dx_BBGameManager_RemoveEatCbFunction'.", &tolua_err);
-#endif
-	return 0;
+	return (time1.tv_sec - time2.tv_sec) * 1000000 + (time1.tv_usec - time2.tv_usec);
 }
+
 
 int extendBBGameManager(lua_State* tolua_S) {
 	lua_pushstring(tolua_S, "BBGameManager");
@@ -317,9 +289,8 @@ int extendBBGameManager(lua_State* tolua_S) {
 	{
 		tolua_function(tolua_S, "GetPlayerNodeInfo", tolua_cocos2d_BBGameManager_GetPlayerNodeInfo);
 		tolua_function(tolua_S, "GetSpikyInfo", tolua_cocos2d_BBGameManager_GetSpikyInfo);
+		tolua_function(tolua_S, "GetSporeInfo", tolua_cocos2d_BBGameManager_GetSporeInfo);
 		
-		tolua_function(tolua_S, "SetEatCbFunction", tolua_cocos2d_BBGameManager_SetEatCbFunction);
-		tolua_function(tolua_S, "RemoveEatCbFunction", lua_cocos2dx_BBGameManager_RemoveEatCbFunction);
 	}
 	lua_pop(tolua_S, 1);
 
@@ -412,19 +383,19 @@ int lua_cocos2dx_Live2DSprite_RemoveUpdateCallback(lua_State* tolua_S)
 
 
 int extendLive2DVer2Sprite(lua_State* tolua_S) {
-    Live2D::init();
+	Live2D::init();
 
 #ifdef L2D_TARGET_ANDROID_ES2
-    char *exts = (char*)glGetString(GL_EXTENSIONS);
-    if (strstr(exts, "GL_NV_shader_framebuffer_fetch ")) {
-        live2d::DrawParam_OpenGLES2::setExtShaderMode(true, true);
-    }
+	char *exts = (char*)glGetString(GL_EXTENSIONS);
+	if (strstr(exts, "GL_NV_shader_framebuffer_fetch ")) {
+		live2d::DrawParam_OpenGLES2::setExtShaderMode(true, true);
+	}
 
-    Director::getInstance()->getEventDispatcher()->addEventListenerWithFixedPriority(EventListenerCustom::create(EVENT_RENDERER_RECREATED,
-        [](EventCustom*)
-    {
-        live2d::DrawParam_OpenGLES2::reloadShader();
-    }), -1);
+	Director::getInstance()->getEventDispatcher()->addEventListenerWithFixedPriority(EventListenerCustom::create(EVENT_RENDERER_RECREATED,
+		[](EventCustom*)
+	{
+		live2d::DrawParam_OpenGLES2::reloadShader();
+	}), -1);
 #endif
 
 	lua_pushstring(tolua_S, "Live2DSprite");
@@ -451,10 +422,10 @@ int extendLive2DVer3Sprite(lua_State* tolua_S) {
 
 TOLUA_API int register_all_ccext_manual(lua_State* tolua_S)
 {
-    register_all_ccext(tolua_S);
-    register_all_ccext_logic(tolua_S);
+	register_all_ccext(tolua_S);
+	register_all_ccext_logic(tolua_S);
 
-    extendDrawNode3D(tolua_S);
+	extendDrawNode3D(tolua_S);
 	extendBBGameManager(tolua_S);
 
 #if CCEXT_USE_LIVE2DVER2

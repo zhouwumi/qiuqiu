@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BB_OBJECT_MANAGER_CPP
+#define BB_OBJECT_MANAGER_CPP
 #include "BBObjects.h"
 #include "BBPlayerNode.h"
 #include "BBRect.h"
@@ -22,14 +23,14 @@ public:
 	Player* CreatePlayer(int uid);
 	PlayerNode* CreatePlayerNode(int uid, int mass, int cd, const BBPoint& FromLocation, const BBVector& Current, const BBVector& Delta, const BBVector& Final, const BBVector& Direction);
 	PlayerNode*  CreatePlayerNode(int uid, int mass);
+	PlayerNode* CreateSimplePlayerNode();
 
-
-	unsigned int _getNextObjIdx();
-private:
-	
+	Spore* CreateSpore(PlayerNode* sourceNode);
+	unsigned int GetNextObjIdx();
 
 private:
 	BBGameManager* gameManager;
 	unsigned int _curObjIdx;
 };
 
+#endif
