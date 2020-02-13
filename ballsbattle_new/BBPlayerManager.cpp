@@ -1,11 +1,11 @@
 #include "BBPlayerManager.h"
 #include "BBObjectManager.h"
 #include "BBGameManager.h"
+#include "BBConfigManager.h"
 #include "BBConst.h"
 #include<algorithm>
 #include "BBMathUtils.h"
 #include<math.h>
-#include "BBFrameCacheManager.h"
 #if defined(_WIN32) && defined(_WINDOWS)
 #include "cocos2d.h"
 #else
@@ -13,15 +13,22 @@
 #include<sys/time.h>
 #endif
 
-bool ComparePlayerNodes(PlayerNode* nodeA, PlayerNode* nodeB)
+void BB_PlayerManager_gettimeofday(timeval& tm)
 {
-	return nodeA->Idx < nodeB->Idx;
+#if defined(_WIN32) && defined(_WINDOWS)
+	cocos2d::gettimeofday(&tm, NULL);
+#else
+	gettimeofday(&tm, NULL);
+#endif
+}
+
+int BB_PlayerManager_getCost(timeval time1, timeval time2)
+{
+	return (time1.tv_sec - time2.tv_sec) * 1000000 + (time1.tv_usec - time2.tv_usec);
 }
 
 BBPlayerManager::BBPlayerManager():
-	timeHit(0),
-	timeUpdateCirle(0),
-	timeMovePlayer(0)
+	nextPlayerIdx(1)
 {
 }
 
@@ -43,45 +50,44 @@ BBPlayerManager::~BBPlayerManager()
 	mapPlayers.clear();
 }
 
-
-
-void BBPlayerManager::_onNewPlayerNodeGenerate(Player* player, PlayerNode* playerNode, bool addNew)
+void BBPlayerManager::OnNewPlayerNodeGenerate(BBPlayer* player, BBPlayerNode* playerNode, bool addNew)
 {
-	player->vecPlayerNodes.emplace_back(playerNode);
-	std::sort(player->vecPlayerNodes.begin(), player->vecPlayerNodes.end(), ComparePlayerNodes);
-	mapPlayNodes.emplace(playerNode->Idx, playerNode);
+	player->AddPlayerNode(playerNode);
+	mapPlayNodes.emplace(playerNode->idx, playerNode);
 	gameManager->NodeTree.AddCircleNode(playerNode);
 
 	if (addNew)
 	{
-		gameManager->frameCacheManager.AddNewPlayerNode(player->uid, playerNode->Idx);
+		gameManager->frameOutManager.AddNewPlayerNode(player->uid, playerNode->idx);
 	}
 }
 
 /**玩家部分**/
-void BBPlayerManager::ServerCreatePlayer(int uid)
+//server interface
+void BBPlayerManager::ServerCreatePlayer(unsigned int uid)
 {
-	if (mapPlayers.find(uid) == mapPlayers.end())
+	if (!gameManager->IsServer())
 	{
-		Player* player = gameManager->objectManager.CreatePlayer(uid);
+		return;
+	}
+	BBPlayer* player = NULL;
+	auto iter = mapPlayers.find(uid);
+	if (iter == mapPlayers.end())
+	{
+		int playerIdx = GetNextPlayerIdx();
+		player = new BBPlayer(uid, playerIdx);
+		player->SetGameManager(gameManager);
 		mapPlayers.emplace(uid, player);
+	}
+	else {
+		player = iter->second;
+	}
+	player->ResetCommands();
+	if (player->vecPlayerNodes.size() == 0)
+	{
 		ServerCreatePlayerNode(uid);
-		PlayerNode* node = player->vecPlayerNodes[0];
-		player->ResetPoint(node->Location.x, node->Location.y);
-		_KeyFrameUpdatePlayer(player);
 	}
-	else
-	{
-		Player* player = mapPlayers[uid];
-		if (player->vecPlayerNodes.size() == 0)
-		{
-			ServerCreatePlayerNode(uid);
-			PlayerNode* node = player->vecPlayerNodes[0];
-			player->ResetPoint(node->Location.x, node->Location.y);
-			_KeyFrameUpdatePlayer(player);
-		}
-	}
-	gameManager->frameCacheManager.AddNewPlayer(uid);
+	gameManager->frameOutManager.AddNewPlayer(uid);
 	for (int i = 0; i < playerIds.size(); i++)
 	{
 		if (playerIds[i] == uid)
@@ -93,17 +99,24 @@ void BBPlayerManager::ServerCreatePlayer(int uid)
 	std::sort(playerIds.begin(), playerIds.end());
 }
 
-void BBPlayerManager::CreatePlayerFromServer(int uid, int directionX, int directionY, int finalX, int finalY, bool isStopped, int NMass)
+//client interface
+void BBPlayerManager::CreatePlayerFromServer(unsigned int uid, unsigned int playerIdx, int directionX, int directionY, int NMass, int nextNodeIdx, int finalPointX, int finalPointY, bool Stopped)
 {
-	Player* player = new Player(uid);
+	if (gameManager->IsServer())
+	{
+		return;
+	}
+	BBPlayer* player = new BBPlayer(uid, playerIdx);
+	player->SetGameManager(gameManager);
 	player->NMass = NMass;
-	player->Direction.x = directionX;
-	player->Direction.y = directionY;
-	player->Stopped = isStopped;
-	player->FinalPoint.x = finalX;
-	player->FinalPoint.y = finalY;
+	player->nextNodeIdx = nextNodeIdx;
+	player->direction.x = directionX;
+	player->direction.y = directionY;
+	player->FinalPoint.x = BBMathUtils::bb_int_to_float(finalPointX);
+	player->FinalPoint.y = BBMathUtils::bb_int_to_float(finalPointY);
+	player->Stopped = Stopped;
 	mapPlayers.emplace(uid, player);
-	gameManager->frameCacheManager.AddNewPlayer(uid);
+	//gameManager->frameOutManager.AddNewPlayer(uid);
 	for (int i = 0; i < playerIds.size(); i++)
 	{
 		if (playerIds[i] == uid)
@@ -115,50 +128,65 @@ void BBPlayerManager::CreatePlayerFromServer(int uid, int directionX, int direct
 	std::sort(playerIds.begin(), playerIds.end());
 }
 
-void BBPlayerManager::ServerCreatePlayerNode(int uid)
+void BBPlayerManager::ServerCreatePlayerNode(unsigned int uid)
 {
-	Player* player = mapPlayers[uid];
+	if (!gameManager->IsServer())
+	{
+		return;
+	}
+	BBPlayer* player = GetPlayer(uid);
 	if (!player)
 	{
 		return;
 	}
-	PlayerNode* newPlayerNode = gameManager->objectManager.CreatePlayerNode(uid, 200);
+	BBPlayerNode* newPlayerNode = new BBPlayerNode();
+	newPlayerNode->uid = uid;
+	newPlayerNode->protect = BBConfigManager::protectTime;
+	newPlayerNode->SetBallMass(BBConst::DebugDefaultNodeMass);
+	newPlayerNode->idx = player->GetNextPlayerNodeIdx();
+
 	int radius = newPlayerNode->GetRadius();
 	int x, y;
 	gameManager->hitManager.FindFreePlayerNodePos(radius, x, y);
-	newPlayerNode->ChangePosition(x, y);
+	if (uid == gameManager->GetUserId())
+	{
+		x = 600;
+		y = 600;
+	}
+	else
+	{
+		x = 500;
+		y = 500;
 
-	
-	_onNewPlayerNodeGenerate(player, newPlayerNode);
+	}
+	newPlayerNode->ChangePosition(x, y);
+	newPlayerNode->ChangeRenderPosition(x, y);
+	OnNewPlayerNodeGenerate(player, newPlayerNode);
 }
 
-Player* BBPlayerManager::GetPlayer(int uid)
+BBPlayer* BBPlayerManager::GetPlayer(unsigned int uid)
 {
 	auto iter = mapPlayers.find(uid);
 	if (iter == mapPlayers.end())
 	{
 		return NULL;
 	}
-	return (*iter).second;
+	return iter->second;
 }
 
-void BBPlayerManager::RemovePlayerNode(int uid, int nodeIdx, bool removeFromVec)
+void BBPlayerManager::RemovePlayerNode(unsigned int uid, unsigned int nodeIdx)
 {
 	if (mapPlayNodes.find(nodeIdx) == mapPlayNodes.end())
 	{
 		return;
 	}
-	PlayerNode* node = mapPlayNodes[nodeIdx];
+	BBPlayerNode* node = mapPlayNodes[nodeIdx];
 	mapPlayNodes.erase(nodeIdx);
 	gameManager->NodeTree.RemoveCircleNode(node);
 
-	if (removeFromVec)
+	BBPlayer* player = mapPlayers[uid];
+	if (player)
 	{
-		Player* player = mapPlayers[uid];
-		if (!player)
-		{
-			return;
-		}
 		for (int i = player->vecPlayerNodes.size() - 1; i >= 0; i--)
 		{
 			if (player->vecPlayerNodes[i] == node)
@@ -168,175 +196,102 @@ void BBPlayerManager::RemovePlayerNode(int uid, int nodeIdx, bool removeFromVec)
 			}
 		}
 	}
+	
 	delete node;
 }
 
-//玩家分裂
-void BBPlayerManager::PlayerSplit(int uid)
+void BBPlayerManager::CreatePlayerNodeFromServer(unsigned int uid, unsigned int idx, int fromId, int x, int y, int mass, int cd, int protect, int initStopFrame, int initSpeed, int initDeltaSpeed, int speedX, int speedY)
 {
-	if (mapPlayers.find(uid) == mapPlayers.end())
-	{
-		//assert("player split but not : map");
-		return;
-	}
-	Player* player = mapPlayers[uid];
-	if (player->vecPlayerNodes.size() >= BBConst::MaxCell)
-	{
-		return;
-	}
-	int curentCount = player->vecPlayerNodes.size();
-	std::vector<PlayerNode*> splitPlayerNodes;
-	for (auto playerNode : player->vecPlayerNodes)
-	{
-		if (playerNode->GetBallMass() > BBConst::MinSplitMass)
-		{
-			splitPlayerNodes.emplace_back(playerNode);
-		}
-	}
-	std::sort(splitPlayerNodes.begin(), splitPlayerNodes.end(), ComparePlayerNodes);
-	std::vector<int> selectedNodes;
-	for (int i = 0; i < splitPlayerNodes.size(); i++)
-	{
-		selectedNodes.emplace_back(i);
-		curentCount++;
-		if (curentCount == BBConst::MaxCell)
-		{
-			break;
-		}
-	}
-	for (int idx : selectedNodes)
-	{
-		PlayerNode* child = splitPlayerNodes[idx];
-		gameManager->frameCacheManager.AddCd(child->Idx, uid);
-
-		if (gameManager->IsServer())
-		{
-			PlayerNode* newNode = DoPlayerNodeSelfSplit(child);
-			gameManager->frameCacheManager.AddCd(newNode->Idx, uid);
-			_onNewPlayerNodeGenerate(player, newNode);
-		}
-		else {
-			float childMas = child->GetBallMass() / 2.0f;
-			child->ChangeDeltaMass(-childMas);
-		}
-	}
-}
-
-PlayerNode* BBPlayerManager::DoPlayerNodeSelfSplit(PlayerNode* sourceNode)
-{
-	int childMas = sourceNode->GetBallMass() / 2;
-	sourceNode->ChangeDeltaMass(-childMas);
-	PlayerNode* newPlayerNode = gameManager->objectManager.CreateSimplePlayerNode();
-	newPlayerNode->Uid = sourceNode->Uid;
-	if (sourceNode->Direction == BBVector::ZERO) {
-		newPlayerNode->Direction = BBVector::GetFixedVetor2(BBVector(1, 0), BBMathUtils::Mass2Speed(childMas));
-	}
-	else {
-		newPlayerNode->Direction = sourceNode->Direction;
-	}
-    newPlayerNode->SetBallMass(childMas);
-	BBVector moveVec = BBVector::GetFixedVetor2(newPlayerNode->Direction, sourceNode->GetRadius());
-	newPlayerNode->ChangePosition(sourceNode->Location.x + moveVec.x, sourceNode->Location.y + moveVec.y);
-	newPlayerNode->FromId = sourceNode->Idx;
-	newPlayerNode->Init = BBConst::SplitFrame;
-	newPlayerNode->Current = newPlayerNode->Direction;
-	newPlayerNode->CalculateInitMoveParams(newPlayerNode->GetRadius(), BBConst::SplitFrame, BBConst::SplitInitSpeed, BBConst::SplitFinalSpeed);
-	return newPlayerNode;
-}
-
-int BBPlayerManager::DoPlayerNodeSpikySplit(PlayerNode* sourceNode, int maxChildNode, int spikyMass)
-{
-	if (sourceNode->GetBallMass() < spikyMass)
-	{
-		return 0;
-	}
-	if (maxChildNode == 0)
-	{
-		sourceNode->ChangeDeltaMass(spikyMass);
-		return 0;
-	}
-	int uid = sourceNode->Uid;
-	if (mapPlayers.find(uid) == mapPlayers.end())
-	{
-		return 0;
-	}
-	
-	Player* player = mapPlayers[uid];
-	int assignMass = 2 * spikyMass;
-	int childMass = assignMass / (maxChildNode + 1);
-	if (childMass > 40)
-	{
-		childMass = 40;
-	}
-	int centerMass = sourceNode->GetBallMass() + spikyMass - childMass * maxChildNode;
-	sourceNode->ChangeDeltaMass(centerMass - sourceNode->GetBallMass());
-	if (!gameManager->IsServer())
-	{
-		return maxChildNode;
-	}
-	int splitAngle = ceilf(360.0f / maxChildNode);
-	int directionAngle = sourceNode->Direction.GetAngle();
-	for (int i = 0; i < maxChildNode; i++)
-	{
-		PlayerNode* newPlayerNode = gameManager->objectManager.CreateSimplePlayerNode();
-		newPlayerNode->Uid = sourceNode->Uid;
-		newPlayerNode->Cd = 0;
-        newPlayerNode->SetBallMass(childMass);
-		newPlayerNode->Init = BBConst::SplitFrame;
-		newPlayerNode->Direction = BBMathUtils::AngleToFixedVector(directionAngle + splitAngle * i, BBMathUtils::Mass2Speed(childMass));
-
-		BBVector moveVec = BBVector::GetFixedVetor2(newPlayerNode->Direction, sourceNode->GetRadius());
-		newPlayerNode->ChangePosition(sourceNode->Location.x + moveVec.x, sourceNode->Location.y + moveVec.y);
-		newPlayerNode->FromId = sourceNode->Idx;
-		newPlayerNode->CalculateInitMoveParams(newPlayerNode->GetRadius(), BBConst::SplitFrame, BBConst::SplitInitSpeed, BBConst::SplitFinalSpeed);
-
-		gameManager->frameCacheManager.AddCd(newPlayerNode->Idx, newPlayerNode->Uid);
-		_onNewPlayerNodeGenerate(player, newPlayerNode);
-	}
-	return maxChildNode;
-}
-
-void BBPlayerManager::AddNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd, int Protect)
-{
-	PlayerNode* newPlayerNode = new PlayerNode();
-	newPlayerNode->Uid = uid;
-	newPlayerNode->Idx = idx;
-	newPlayerNode->Cd = Cd;
-	newPlayerNode->FromId = fromId;
+	BBPlayerNode* newPlayerNode = new BBPlayerNode();
+	newPlayerNode->uid = uid;
+	newPlayerNode->idx = idx;
+	newPlayerNode->cd = cd;
+	newPlayerNode->fromId = fromId;
     newPlayerNode->SetBallMass(mass);
-	newPlayerNode->Init = Init;
-	newPlayerNode->Protect = Protect;
-	newPlayerNode->Current.SetPoint(currentX, currentY);
-	newPlayerNode->Direction.SetPoint(directionX, directionY);
-	newPlayerNode->ChangePosition(x, y);
-	newPlayerNode->initSpeed = curSpeed;
-	newPlayerNode->initDeltaSpeed = deltaSpeed;
-	Player* player = GetPlayer(uid);
+	newPlayerNode->protect = protect;
+	newPlayerNode->currentSpeedVec.SetPoint(BBMathUtils::bb_int_to_float(speedX), BBMathUtils::bb_int_to_float(speedY));
+	newPlayerNode->ChangePosition(BBMathUtils::bb_int_to_float(x), BBMathUtils::bb_int_to_float(y));
+	newPlayerNode->ChangeRenderPosition(BBMathUtils::bb_int_to_float(x), BBMathUtils::bb_int_to_float(y));
+	newPlayerNode->initStopFrame = initStopFrame;
+	newPlayerNode->initSpeed = initSpeed;
+	newPlayerNode->initDeltaSpeed = initDeltaSpeed;
+	BBPlayer* player = GetPlayer(uid);
 	//从lua层来主动创建的node不放入到新的玩家节点列表中
-	_onNewPlayerNodeGenerate(player, newPlayerNode, false);
+	OnNewPlayerNodeGenerate(player, newPlayerNode, false);
 }
 
-void BBPlayerManager::AddPlayerSplitNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd, int Protect)
+void BBPlayerManager::CreateSplitPlayerNodeFromServer(unsigned int uid, unsigned int idx, unsigned int fromId, int x, int y, int mass,int speedX, int speedY, int cd, int protect)
 {
-	PlayerNode* newPlayerNode = new PlayerNode();
-	newPlayerNode->Uid = uid;
-	newPlayerNode->Idx = idx;
-	newPlayerNode->Cd = Cd;
-	newPlayerNode->FromId = fromId;
+	BBPlayer* player = GetPlayer(uid);
+	if (!player)
+	{
+		return;
+	}
+	BBPlayerNode* sourceNode = player->GetPlayerNode(fromId);
+	if (!sourceNode)
+	{
+		return;
+	}
+	BBPlayerNode* newPlayerNode = new BBPlayerNode();
+	newPlayerNode->fromId = fromId;
+	newPlayerNode->uid = uid;
+	newPlayerNode->player = player;
+	newPlayerNode->idx = idx;
+	newPlayerNode->ChangePosition(BBMathUtils::bb_int_to_float(x), BBMathUtils::bb_int_to_float(y));
+	newPlayerNode->currentSpeedVec.SetPoint(BBMathUtils::bb_int_to_float(speedX), BBMathUtils::bb_int_to_float(speedY));
 	newPlayerNode->SetBallMass(mass);
-	newPlayerNode->Init = Init;
-	newPlayerNode->Protect = Protect;
-	newPlayerNode->Current.SetPoint(currentX, currentY);
-	newPlayerNode->Direction.SetPoint(directionX, directionY);
-	newPlayerNode->ChangePosition(x, y);
-	newPlayerNode->initSpeed = curSpeed;
-	newPlayerNode->initDeltaSpeed = deltaSpeed;
-	Player* player = GetPlayer(uid);
-	//从lua层来主动创建的node不放入到新的玩家节点列表中
-	_onNewPlayerNodeGenerate(player, newPlayerNode, false);
+	newPlayerNode->cd = cd;
+	newPlayerNode->protect = protect;
+	BBVector moveVec = BBVector::GetFixedVetor2(newPlayerNode->currentSpeedVec, sourceNode->GetRadius());
+	//newPlayerNode->ChangeRenderPosition(sourceNode->location.x + moveVec.x, sourceNode->location.y + moveVec.y);
+	newPlayerNode->ChangeRenderPosition(sourceNode->mDeltaData.location.x +moveVec.x, sourceNode->mDeltaData.location.y + moveVec.y);
+	newPlayerNode->CalcBallDelta();
+	newPlayerNode->CalculateInitMoveParams(newPlayerNode->GetRadius(), BBConst::SplitFrame, BBConst::SplitInitSpeed);
+	OnNewPlayerNodeGenerate(player, newPlayerNode, false);
 }
 
-void BBPlayerManager::RemoveMass()
+void BBPlayerManager::AddPlayerSplitNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int initStopFrame, int cd, int protect)
+{
+	BBPlayerNode* newPlayerNode = new BBPlayerNode();
+	newPlayerNode->uid = uid;
+	newPlayerNode->idx = idx;
+	newPlayerNode->cd = cd;
+	newPlayerNode->fromId = fromId;
+	newPlayerNode->SetBallMass(mass);
+	newPlayerNode->initStopFrame = initStopFrame;
+	newPlayerNode->protect = protect;
+	newPlayerNode->currentSpeedVec.SetPoint(currentX, currentY);
+	//newPlayerNode->direction.SetPoint(directionX, directionY);
+	newPlayerNode->ChangePosition(x, y);
+	newPlayerNode->ChangeRenderPosition(x, y);
+	newPlayerNode->initSpeed = curSpeed;
+	newPlayerNode->initDeltaSpeed = deltaSpeed;
+	BBPlayer* player = GetPlayer(uid);
+	//从lua层来主动创建的node不放入到新的玩家节点列表中
+	OnNewPlayerNodeGenerate(player, newPlayerNode, false);
+}
+
+
+void BBPlayerManager::HandleFrameInputCommand()
+{
+	auto& playerCommands = gameManager->frameInManager.playerCommands;
+	for(auto& iter : playerCommands)
+	{
+		unsigned int uid = iter.first;
+		auto& commands = iter.second;
+		auto playerIter = mapPlayers.find(uid);
+		if (playerIter != mapPlayers.end())
+		{
+			for (auto& command : commands)
+			{
+				playerIter->second->mCommandList.pushCommand(command);
+			}
+		}
+	}
+}
+
+//update state
+void BBPlayerManager::UpdatePlayer()
 {
 	for (int i = 0; i < playerIds.size(); i++)
 	{
@@ -344,441 +299,67 @@ void BBPlayerManager::RemoveMass()
 		auto iter = mapPlayers.find(playerId);
 		if (iter != mapPlayers.end())
 		{
-			Player* player = (*iter).second;
-			if (player->vecPlayerNodes.size() > 0)
-			{
-				player->RemoveMass();
-			}
+			/*if (gameManager->IsServer() || gameManager->needUpdatePlayers.find(playerId) != gameManager->needUpdatePlayers.end())
+			{*/
+				iter->second->Update();
+			//}
 		}
 	}
 }
 
-void BBPlayerManager::_keyFrameChangePlayerFinalPoint(Player* player)
-{
-	if (!player->Stopped) {
-		BBRect rect = player->GetGroupRect();
-		int w = rect.maxX - rect.minX;
-		int h = rect.maxY - rect.minY;
-		int halfLen = (sqrtf(pow(w, 2) + pow(h, 2)) / 2.0f);
-		int baseLen = halfLen * BBConst::MoveRate / BBConst::MoveBase;
-		if (baseLen < BBConst::FixLength) {
-			baseLen = BBConst::FixLength;
-		}
-		int extLen = baseLen * BBMathUtils::PressureToPercent(player->Direction.y);
-		BBVector targetVec = BBMathUtils::AngleToFixedVector(int(player->Direction.x / 10.0f), extLen);
-		if (targetVec == BBVector::ZERO && player->vecPlayerNodes.size() == 1)
-		{
-			for (int i = 0; i < player->vecPlayerNodes.size(); i++)
-			{
-				PlayerNode* node = player->vecPlayerNodes[i];
-				node->Current = BBVector::ZERO;
-				player->UpdateFinalPoint(node->Location.x, node->Location.y);
-			}
-		}
-		else
-		{
-			BBPoint point;
-			point.SetPoint(int(rect.centerX + targetVec.x), int(rect.centerY + targetVec.y));
-			player->UpdateFinalPoint(point.x, point.y);
-			for (int i = 0; i < player->vecPlayerNodes.size(); i++)
-			{
-				PlayerNode* node = player->vecPlayerNodes[i];
-				if (node->Init == 0)
-				{
-					node->SetSpeedVec(player->FinalPoint.x - node->Location.x, player->FinalPoint.y - node->Location.y);
-					BBMathUtils::BBLOG("key frame change node:%d directionX:%d ,directionY:%d\n", node->Idx, node->Current.x, node->Current.y);
-				}
-			}
-		}
-	}
-	else
-	{
-		for (int i = 0; i < player->vecPlayerNodes.size(); i++)
-		{
-			PlayerNode* node = player->vecPlayerNodes[i];
-			if (node->Init == 0)
-			{
-				node->SetSpeedVec(player->FinalPoint.x - node->Location.x, player->FinalPoint.y - node->Location.y);
-			}
-		}
-	}
-	if (player->Direction.y == 0)
-	{
-		player->Stopped = true;
-	}
-}
-
-bool BBPlayerManager::_handleNodeHit(Player* player, PlayerNode* node, BBPoint& locVec)
-{
-	bool ret = false;
-	std::vector<PlayerNode*>& allPlayerNodes = player->vecPlayerNodes;
-	for (int j = 0; j < allPlayerNodes.size(); j++)
-	{
-		PlayerNode* ballB = allPlayerNodes[j];
-		if (ballB->Init <= 0 && ballB != node)
-		{
-			int deltaX = ballB->Location.x - locVec.x;
-			int deltaY = ballB->Location.y - locVec.y;
-
-			int distance = sqrt(pow(deltaX, 2) + pow(deltaY, 2));
-			int totalCircle = ballB->GetRadius() + node->GetRadius();
-			if (totalCircle > distance)
-			{
-				int length = totalCircle - distance;
-				float deltaLen = (float)BBConst::Delta / BBConst::DeltaBase;
-				if (node->Cd > 0 || ballB->Cd > 0 || BBMathUtils::NeedRollback(*node, *ballB, deltaLen))
-				{
-					BBVector fixVec(locVec.x - ballB->Location.x, locVec.y - ballB->Location.y);
-					BBVector vec = BBVector::GetFixedVetor2(fixVec, length);
-					BBPoint oldVec = locVec;
-					if (locVec.x <= ballB->Location.x)
-					{
-						locVec.x = locVec.x - abs(vec.x);
-					}
-					else if (locVec.x > ballB->Location.x)
-					{
-						locVec.x = locVec.x + abs(vec.x);
-					}
-
-					if (locVec.y <= ballB->Location.y)
-					{
-						locVec.y = locVec.y - abs(vec.y);
-					}
-					else if (locVec.y > ballB->Location.y)
-					{
-						locVec.y = locVec.y + abs(vec.y);
-					}
-				}
-				ret = true;
-			}
-		}
-	}
-	return ret;
-}
-
-void BBPlayerManager::_moveNode(Player* player, PlayerNode* node, BBPoint& locVec)
-{
-	BBPoint& finalPoint = player->FinalPoint;
-	int lastX = node->Location.x;
-	int lastY = node->Location.y;
-	if (node->Init > 0)
-	{
-		//BBVector before = node->Current;
-		node->InitMove();
-		//BBMathUtils::BBLOG("node %d ball init move beforedir = %f-%f, dir = %f-%f speed is: %d", node->Idx, before.x, before.y, node->Current.x, node->Current.y, node->initSpeed);
-	}
-
-	if (node->Current != BBVector::ZERO)
-	{
-		locVec.x += node->Current.x;
-		locVec.y += node->Current.y;
-		if (node->Init > 0)
-		{
-			return;
-		}
-		if (lastX <= finalPoint.x && locVec.x >= finalPoint.x)
-		{
-			locVec.x = finalPoint.x;
-		}
-		if (lastX >= finalPoint.x && locVec.x <= finalPoint.x)
-		{
-			locVec.x = finalPoint.x;
-		}
-
-		if (lastY <= finalPoint.y && locVec.y >= finalPoint.y)
-		{
-			locVec.y = finalPoint.y;
-		}
-		if (lastY >= finalPoint.y && locVec.y <= finalPoint.y)
-		{
-			locVec.y = finalPoint.y;
-		}
-	}
-}
-
-void BB_PlayerManager_gettimeofday(timeval& tm)
-{
-#if defined(_WIN32) && defined(_WINDOWS)
-	cocos2d::gettimeofday(&tm, NULL);
-#else
-	gettimeofday(&tm, NULL);
-#endif
-}
-
-int BB_PlayerManager_getCost(timeval time1, timeval time2)
-{
-	return (time1.tv_sec - time2.tv_sec) * 1000000 + (time1.tv_usec - time2.tv_usec);
-}
-
-//玩家移动
-void BBPlayerManager::MovePlayer(Player* player)
-{
-	std::vector<PlayerNode*>& allPlayerNodes = player->vecPlayerNodes;
-	if (allPlayerNodes.size() == 0)
-	{
-		player->Direction = BBVector::ZERO;
-		player->Stopped = true;
-		return;
-	}
-	
-	BBMathUtils::BBLOG("current target point %d-%d\n", player->FinalPoint.x, player->FinalPoint.y);
-	bool isBalance = true;
-	bool isAllHit = true;
-	for (int i = 0; i < allPlayerNodes.size(); i++)
-	{
-		PlayerNode* node = allPlayerNodes[i];
-		BBPoint locVec = node->Location;
-		_moveNode(player, node, locVec);
-		if (node->Init == 0 && allPlayerNodes.size() > 1)
-		{
-			bool isHit = _handleNodeHit(player, node, locVec);
-			if (isHit)
-			{
-				BBMathUtils::BBLOG("node %d happend hit from position from %d-%d  to %d-%d\n", node->Idx, node->Location.x, node->Location.y, locVec.x, locVec.y);
-			}
-			else {
-				isAllHit = false;
-			}
-		}
-
-		bool isFixedX, isFixedY;
-		int fixedX, fixedY;
-		BBMathUtils::FixCircle(gameManager->mapRect, locVec.x, locVec.y, node->GetRadius(), fixedX, fixedY, isFixedX, isFixedY);
-		if (node->Current != BBVector::ZERO)
-		{
-			BBMathUtils::BBLOG("node %d change position from %d-%d  to %d-%d\n", node->Idx, node->Location.x, node->Location.y, fixedX, fixedY);
-			BBMathUtils::BBLOG("node %d Current is %f-%f, init is %d cd is %d\n", node->Idx, node->Current.x, node->Current.y, node->Init, node->Cd);
-		}
-		
-		int distance = (fixedX - node->Location.x) * (fixedX - node->Location.x) + (fixedY - node->Location.y) * (fixedY - node->Location.y);
-		if (distance > 2)
-		{
-			isBalance = false;
-		}
-		node->ChangePosition(fixedX, fixedY);
-		gameManager->NodeTree.UpdateCircleNode(node);
-	}
-}
-
-void BBPlayerManager::_KeyFrameUpdatePlayer(Player* player)
-{
-	_keyFrameChangePlayerFinalPoint(player);
-	for (int i = 0; i < player->vecPlayerNodes.size(); i++)
-	{
-		PlayerNode* node = player->vecPlayerNodes[i];
-		if (node->Init > 0)
-		{
-			node->Init -= 5;
-			if (node->Init == 0)
-			{
-				node->SetSpeedVec(player->FinalPoint.x - node->Location.x, player->FinalPoint.y - node->Location.y);
-			}
-		}
-		if (node->Cd > 0)
-		{
-			node->Cd -= 5;
-		}
-		if (node->Protect > 0)
-		{
-			node->Protect -= 5;
-		}
-	}
-}
-
-void BBPlayerManager::KeyFrameUpdatePlayer()
+void BBPlayerManager::PlayerEat()
 {
 	for (int i = 0; i < playerIds.size(); i++)
 	{
 		auto iter = mapPlayers.find(playerIds[i]);
 		if (iter != mapPlayers.end())
 		{
-			_KeyFrameUpdatePlayer((*iter).second);
+			BBPlayer* player = (*iter).second;
+			player->Eat();
 		}
-	}
-}
-
-void BBPlayerManager::MovePlayers()
-{
-	timeHit = 0;
-	timeUpdateCirle = 0;
-	timeMovePlayer = 0;
-	for (int i = 0; i < playerIds.size(); i++)
-	{
-		auto iter = mapPlayers.find(playerIds[i]);
-		if (iter != mapPlayers.end())
-		{
-			MovePlayer((*iter).second);
-		}
-	}
-}
-
-void BBPlayerManager::DoShoot()
-{
-	if (gameManager->frameCacheManager.playerShootOperates.size() <= 0)
-	{
-		return;
-	}
-	for (auto iter : gameManager->frameCacheManager.playerShootOperates)
-	{
-		int uid = iter.first;
-		if (mapPlayers.find(uid) == mapPlayers.end())
-		{
-			continue;
-		}
-		Player* player = mapPlayers[uid];
-		if (player->vecPlayerNodes.size() == 0)
-		{
-			continue;
-		}
-		for (int i = 0; i < player->vecPlayerNodes.size(); i++)
-		{
-			PlayerNode* playerNode = player->vecPlayerNodes[i];
-			if (playerNode->GetBallMass() >= BBConst::ShootMinMass)
-			{
-				playerNode->ChangeDeltaMass(-1 * BBConst::SporeMass);
-
-				//暂时孢子由服务器生成,客户端不在这里生成孢子.
-				if (gameManager->IsServer())
-				{
-					gameManager->sporeManager.CreateSpore(playerNode);
-				}
-			}
-		}
-	}
-}
-
-void BBPlayerManager::DoEat(std::vector<int>& eatResults)
-{
-	for (int i = 0; i < playerIds.size(); i++)
-	{
-		auto iter = mapPlayers.find(playerIds[i]);
-		if (iter != mapPlayers.end())
-		{
-			Player* player = (*iter).second;
-			for (PlayerNode* node : player->vecPlayerNodes)
-			{
-				DoEat(node, eatResults);
-			}
-		}
-	}
-}
-
-void BBPlayerManager::DoEat(PlayerNode* node, std::vector<int>& eatResults)
-{
-	std::vector<int> vec;
-	gameManager->hitManager.GetCanEatFood(node, vec);
-	if (vec.size() > 0)
-	{
-		for (int i = 0; i < vec.size(); i += 2)
-		{
-			gameManager->frameCacheManager.AddEatenFood(vec[i], vec[i + 1]);
-			gameManager->foodSpikyManager.RemoveFoodByIdx(vec[i + 1]);
-			_eat(eatResults, Type_Food, vec[i + 1], Type_PlayerNode, vec[i]);
-		}
-		vec.clear();
-	}
-	gameManager->hitManager.GetCanEatSpiky(node, vec);
-	if (vec.size() > 0)
-	{
-		for (int i = 0; i < vec.size(); i += 3)
-		{
-			_eat(eatResults, Type_Spiky, vec[i + 1], Type_PlayerNode, vec[i]);
-			gameManager->frameCacheManager.AddEatenSpiKy(vec[i], vec[i + 1],vec[i + 2]);
-			gameManager->foodSpikyManager.SpikyBeEat(vec[i + 1]);
-		}
-		vec.clear();
-	}
-	
-	std::vector<int> sporeVec;
-	gameManager->hitManager.GetCanEatNodeOrSpore(node, vec, sporeVec);
-	if (sporeVec.size() > 0)
-	{
-		for (int i = 0; i < sporeVec.size(); i += 3)
-		{
-			_eat(eatResults, Type_Spore, sporeVec[i + 1], Type_PlayerNode, sporeVec[i]);
-
-			gameManager->frameCacheManager.AddEatenSpores(sporeVec[i], sporeVec[i + 1]);
-			gameManager->sporeManager.RemoveSporeByIdx(sporeVec[i + 1]);
-		}
-		sporeVec.clear();
-	}
-	if (vec.size() > 0 || sporeVec.size()> 0)
-	{
-		int temp = 1;
-		//for (int i = 0; i < vec.size(); i += 3)
-		//{
-		//	//_eat(eatResults, Type_Spiky, vec[i + 1], Type_PlayerNode, vec[i]);
-		//	/*gameManager->frameCacheManager.AddEatenSpiKy(vec[i], vec[i + 2]);
-		//	gameManager->foodSpikyManager.SpikyBeEat(vec[i + 1]);*/
-		//}
-		//vec.clear();
 	}
 }
 
 void BBPlayerManager::FinishEat()
 {
-	FinishEatChangeMass();
-	FinishEatReleate();
+	_finishEatChangeMass();
+	_finishEatReleate();
 }
 
-void BBPlayerManager::FinishEatChangeMass()
+void BBPlayerManager::_finishEatChangeMass()
 {
-	auto allFoodEatInfos = gameManager->frameCacheManager.FoodEeaten;
-	auto allSporeEatInfos = gameManager->frameCacheManager.SporesEaten;
-
 	for (int i = 0; i < playerIds.size(); i++)
 	{
 		auto iter = mapPlayers.find(playerIds[i]);
 		if (iter != mapPlayers.end())
 		{
-			Player* player = (*iter).second;
-			for (PlayerNode* node : player->vecPlayerNodes)
+			BBPlayer* player = (*iter).second;
+			for (BBPlayerNode* node : player->vecPlayerNodes)
 			{
-				int deltaMass = 0;
-				
-				if (allFoodEatInfos.find(node->Idx) != allFoodEatInfos.end())
-				{
-					deltaMass += allFoodEatInfos[node->Idx].size() * BBConst::FoodMass;
-				}
-
-				if (allSporeEatInfos.find(node->Idx) != allSporeEatInfos.end())
-				{
-					deltaMass += allSporeEatInfos[node->Idx].size() * BBConst::SporeMass;
-				}
-
-				if (deltaMass != 0)
-				{
-					int oldMass = node->GetBallMass();
-					if (node->GetBallMass() + deltaMass < BBConst::InitMass)
-					{
-						deltaMass = BBConst::InitMass - node->GetBallMass();
-					}
-					node->ChangeDeltaMass(deltaMass);
-					BBMathUtils::BBLOG("ball eat other mass change: %d-->%d\n", oldMass, node->GetBallMass());
-				}
+				node->EatFoodSpikySporeChangeMass(gameManager);
 			}
 		}
 	}
 }
 
-void BBPlayerManager::FinishEatReleate()
+void BBPlayerManager::_finishEatReleate()
 {
-	auto& removeNodes = gameManager->frameCacheManager.RemovedNodes;
+	auto beEatNodeId2EatInfos = gameManager->frameOutManager.beEatNodeId2EatInfos;
 	std::unordered_map<int, int> fillMap;
-	for(auto& iter : removeNodes)
+	for(auto iter : beEatNodeId2EatInfos)
 	{
 		int beEatNodeIdx = iter.first;
-		int eatNodeIdx = iter.second;
+		int eatNodeIdx = iter.second.nodeId;
 		int finalIdx = eatNodeIdx;
-		while (removeNodes.find(finalIdx) != removeNodes.end())
+		while (beEatNodeId2EatInfos.find(finalIdx) != beEatNodeId2EatInfos.end())
 		{
-			finalIdx = removeNodes[finalIdx];
+			finalIdx = beEatNodeId2EatInfos[finalIdx].nodeId;
 		}
 		fillMap[beEatNodeIdx] = finalIdx;
 	}
-	auto& nodesEaten = gameManager->frameCacheManager.NodesEaten;
+	auto nodeId2BeEatNodes = gameManager->frameOutManager.nodeId2BeEatNodes;
 	std::unordered_map<int, int> massMap;
-	for (auto& iter : nodesEaten)
+	for (auto iter : nodeId2BeEatNodes)
 	{
 		int key = iter.first;
 		if (fillMap.find(key) != fillMap.end())
@@ -789,9 +370,9 @@ void BBPlayerManager::FinishEatReleate()
 		{
 			massMap[key] = 0;
 		}
-		for(auto beEatId : iter.second)
+		for(auto info : iter.second)
 		{
-			PlayerNode* node = mapPlayNodes[beEatId];
+			BBPlayerNode* node = mapPlayNodes[info.beEatNodeId];
 			if (node)
 			{
 				massMap[key] += node->GetBallMass();
@@ -803,7 +384,7 @@ void BBPlayerManager::FinishEatReleate()
 	{
 		int eatNodeIdx = iter.first;
 		int changeMass = iter.second;
-		PlayerNode* node = mapPlayNodes[eatNodeIdx];
+		BBPlayerNode* node = mapPlayNodes[eatNodeIdx];
 		if (node->GetBallMass() + changeMass < BBConst::InitMass)
 		{
 			changeMass = BBConst::InitMass - node->GetBallMass();
@@ -811,139 +392,60 @@ void BBPlayerManager::FinishEatReleate()
 		node->ChangeDeltaMass(changeMass);
 	}
 
-	for (auto& iter : nodesEaten)
+	for (auto iter : beEatNodeId2EatInfos)
 	{
-		for(auto beEatId : iter.second)
-		{
-			PlayerNode* node = mapPlayNodes[beEatId];
-			if (node)
-			{
-				gameManager->frameCacheManager.AddFrameRemovePlayerNodeIdxs(node->Idx, node->Uid);
-				RemovePlayerNode(node->Uid, node->Idx);
-			}
-		}
+		int beEatId = iter.first;
+		NodeEatInfo& info = iter.second;
+		RemovePlayerNode(info.beEatUid, info.beEatNodeId);
 	}
-
 	//....
 }
 
 void BBPlayerManager::DoSpikySplit()
 {
-	if (gameManager->frameCacheManager.SpikysEaten.size() > 0)
+	int size = gameManager->frameOutManager.spikyEatInfos.size();
+	if (size > 0)
 	{
-		for (int i = 0; i < playerIds.size(); i++)
+		for (int i = 0; i < size; i++)
 		{
-			auto iter = mapPlayers.find(playerIds[i]);
-			if (iter != mapPlayers.end())
+			SpikyEatInfo& info = gameManager->frameOutManager.spikyEatInfos[i];
+			int nodeId = info.nodeId;
+			int spikyBallMass = info.spikyBallMass;
+			BBPlayerNode* playerNode = mapPlayNodes[nodeId];
+			int totalNum = playerNode->player->vecPlayerNodes.size();
+			int maxCanSplit = BBConst::MaxCell - totalNum;
+			if (maxCanSplit > BBConst::SpikyChild)
 			{
-				Player* player = (*iter).second;
-				int totalNum = player->vecPlayerNodes.size();
-				int curNum = totalNum;
-				for (int i = 0; i < curNum; i++)
-				{
-					PlayerNode* playerNode = player->vecPlayerNodes[i];
-					auto iter = gameManager->frameCacheManager.SpikysEaten.find(playerNode->Idx);
-					if (iter != gameManager->frameCacheManager.SpikysEaten.end())
-					{
-						int canSplit = BBConst::MaxCell - totalNum;
-						if (canSplit > BBConst::SpikyChild)
-						{
-							canSplit = BBConst::SpikyChild;
-						}
-						std::vector<int>& vec = iter->second;
-						if (vec.size() > 1)
-						{
-							int splitNum = DoPlayerNodeSpikySplit(playerNode, canSplit, vec[1]);
-							totalNum += splitNum;
-							if (splitNum > 0)
-							{
-								gameManager->frameCacheManager.AddCd(playerNode->Idx, playerNode->Uid);
-							}
-						}
-					}
-				}
+				maxCanSplit = BBConst::SpikyChild;
 			}
+			playerNode->SpikySplit(gameManager, maxCanSplit, spikyBallMass);
 		}
 	}
 }
 
-void BBPlayerManager::DoPlayerSplit()
+void BBPlayerManager::ServerDoJoinPlayer()
 {
-	auto& splitOperates = gameManager->frameCacheManager.splitOperates;
-	if (splitOperates.size() > 0)
+	if (!gameManager->IsServer())
 	{
-		for (auto& iter : splitOperates)
-		{
-			PlayerSplit(iter.first);
-		}
+		return;
 	}
-}
-
-void BBPlayerManager::_eat(std::vector<int>& vec, int beEatType, int beEatId, int eatType, int eatId)
-{
-	vec.emplace_back(beEatType);
-	vec.emplace_back(beEatId);
-}
-
-void BBPlayerManager::DoJoin()
-{
-	auto& joinOperates = gameManager->frameCacheManager.joinOperates;
-	for (int i = 0; i < joinOperates.size(); i++)
+	auto& playerJoinIds = gameManager->frameInManager.playerJoinIds;
+	for (int uid : playerJoinIds)
 	{
-		int uid = joinOperates[i].uid;
 		ServerCreatePlayer(uid);
 	}
 }
 
-void BBPlayerManager::AjustVector()
+void BBPlayerManager::HandlePlayerQuit()
 {
-	auto& playerQuitOperates = gameManager->frameCacheManager.playerQuitOperates;
-	for (int i = 0; i < playerQuitOperates.size(); i++)
+	auto& playerQuitIds = gameManager->frameInManager.playerQuitIds;
+	for (int i = 0; i < playerQuitIds.size(); i++)
 	{
-		int uid = playerQuitOperates[i].uid;
+		int uid = playerQuitIds[i];
 		if (mapPlayers.find(uid) != mapPlayers.end())
 		{
-			Player* player = mapPlayers[uid];
-			player->Direction.SetPoint(0, 0);
+			BBPlayer* player = mapPlayers[uid];
+			player->direction.SetPoint(0, 0);
 		}
 	}
-	
-	auto& moveOperates = gameManager->frameCacheManager.moveOperates;
-	for (auto iter : moveOperates)
-	{
-		int uid = iter.second.uid;
-		int angle = iter.second.angle;
-		int pressure = iter.second.pressure;
-
-		BBMathUtils::BBLOG("step move uid:%d angle:%d, pressure:%d\n", uid, angle, pressure);
-		if (mapPlayers.find(uid) != mapPlayers.end())
-		{
-			Player* player = mapPlayers[uid];
-			player->Direction.SetPoint(angle, pressure);
-			BBMathUtils::BBLOG("change Direction uid:%d directionX:%d, directionY:%d\n", uid, player->Direction.x, player->Direction.y);
-			if (pressure != 0)
-			{
-				player->Stopped = false;
-			}
-		}
-	}
-}
-
-unsigned int BBPlayerManager::GetAllPlayerCrc()
-{
-	static unsigned int gameBuffer[50 * 4];
-	unsigned int index = 0;
-
-	for (int i = 0; i < playerIds.size(); i++)
-	{
-		int playerId = playerIds[i];
-		Player* player = GetPlayer(playerId);
-		if (player)
-		{	
-			gameBuffer[index++] = player->GetCrc();
-		}
-	}
-	unsigned int size = index * sizeof(int) / sizeof(char);
-	unsigned int ret = BBMathUtils::crc32((char*)(&gameBuffer), size);
-	return ret;
 }

@@ -18,17 +18,18 @@ public:
 	{
 		gameManager = manager;
 	}
-
-	Spore* CreateSpore(PlayerNode* node);
+	void DebugCreateSpore();
+	Spore* CreateSpore(BBPlayerNode* node);
 	void RemoveSporeByIdx(int idx);
 	void ClearAllSpore();
 
 	void FixSpore(Spore* spore);
-	Spore* GetSporeInfo(int idx);
+	Spore* GetSpore(int idx);
 	void MoveSpores();
 
 	unsigned int GetAllSporeCrc();
-	void AddNewSporeFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd);
+	void AddNewSporeFromServer(int idx, int fromId, unsigned int uid, int x, int y, int directionX, int directionY, int initSpeed, int initDeltaSpeed, int initStopFrame, int cd);
+	void SyncShootFromServer(int idx, int fromId, unsigned int uid, int speedX, int speedY, int locationX, int locationY);
 public:
 	std::unordered_map<unsigned int, Spore*> mapSpores;//孢子
 	std::vector<int> vecSporeIds;

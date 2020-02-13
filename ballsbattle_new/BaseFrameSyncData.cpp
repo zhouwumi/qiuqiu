@@ -17,7 +17,7 @@ BaseFrameData::BaseFrameData() :
 
 }
 
-BaseFrameDelta::BaseFrameDelta() :
+BaseFrameDataDelta::BaseFrameDataDelta() :
 	pos(BBPoint::ZERO),
 	velocity(BBVector::ZERO),
 	wrapTicks(0),

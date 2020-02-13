@@ -1,7 +1,8 @@
 #ifndef BB_PLAYER_MANAGER_CPP
 #define BB_PLAYER_MANAGER_CPP
 #include<unordered_map>
-#include"BBPlayerNode.h"
+#include "BBPlayerNode.h"
+#include "BBPlayer.h"
 
 class BBGameManager;
 
@@ -16,57 +17,46 @@ public:
 		gameManager = manager;
 	}
 
+	inline unsigned int GetNextPlayerIdx()
+	{
+		return nextPlayerIdx++;
+	}
+
 	//玩家
-	void ServerCreatePlayer(int uid);
+	void ServerCreatePlayer(unsigned int uid);
 	//给这个玩家加一个球
-	void ServerCreatePlayerNode(int uid);
-	Player* GetPlayer(int uid);
-	void RemovePlayerNode(int uid, int nodeIdx, bool removeFromVec = true);
+	void ServerCreatePlayerNode(unsigned int uid);
+	BBPlayer* GetPlayer(unsigned int uid);
+	void RemovePlayerNode(unsigned int uid, unsigned int nodeIdx);
 
-	void PlayerSplit(int uid);
-	PlayerNode* DoPlayerNodeSelfSplit(PlayerNode* sourceNode);
-
-	int DoPlayerNodeSpikySplit(PlayerNode* sourceNode, int maxChildNode, int spikyMass);
-
-	void RemoveMass();
-	void MovePlayers();
-	void DoEat(std::vector<int>& eatResults);
-	void DoEat(PlayerNode* node, std::vector<int>& eatResults);
+	void HandleFrameInputCommand();
+	void UpdatePlayer();
+	void PlayerEat();
 	void FinishEat();
-	void FinishEatChangeMass();
-	void FinishEatReleate();
-	void KeyFrameUpdatePlayer();
-
-	void DoShoot();
-	void DoSpikySplit();
-	void DoPlayerSplit();
-	void DoJoin();
-	void AjustVector();
-	unsigned int GetAllPlayerCrc();
-
-	void AddNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd, int Protect);
-	void CreatePlayerFromServer(int uid, int directionX, int directionY, int finalX, int finalY, bool isStopped, int NMass);
-	void AddPlayerSplitNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd, int Protect);
 	
-private:
-	void MovePlayer(Player* player);
-	void _KeyFrameUpdatePlayer(Player* player);
-	void _onNewPlayerNodeGenerate(Player* player, PlayerNode* playerNode, bool addNew = true);
-	void _eat(std::vector<int>& vec, int beEatType, int beEatId, int eatType, int eatId);
-	void _keyFrameChangePlayerFinalPoint(Player* player);
-	bool _handleNodeHit(Player* player, PlayerNode* node, BBPoint& locVec);
-	void _moveNode(Player* player, PlayerNode* node, BBPoint& locVec);
-public:
-	std::unordered_map<unsigned int, PlayerNode*> mapPlayNodes; //玩家的球
-	std::vector<int> playerIds;
-	std::unordered_map<unsigned int, Player*> mapPlayers;//玩家
+	
+	void DoSpikySplit();
+	void ServerDoJoinPlayer();
+	void HandlePlayerQuit();
 
-	int timeHit;
-	int timeUpdateCirle;
-	int timeMovePlayer;
+	void CreatePlayerNodeFromServer(unsigned int uid, unsigned int idx, int fromId, int x, int y, int mass, int cd, int protect, int initStopFrame, int initSpeed, int initDeltaSpeed, int speedX, int speedY);
+	void CreateSplitPlayerNodeFromServer(unsigned int uid, unsigned int idx, unsigned int fromId, int x, int y, int mass, int speedX, int speedY, int cd, int protect);
+	void CreatePlayerFromServer(unsigned int uid, unsigned int playerIdx, int directionX, int directionY, int NMass, int nextNodeIdx, int finalPointX, int finalPointY, bool Stopped);
+	void AddPlayerSplitNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int initStopFrame, int cd, int protect);
+	
+	void OnNewPlayerNodeGenerate(BBPlayer* player, BBPlayerNode* playerNode, bool addNew = true);
+
+private:
+	void _finishEatChangeMass();
+	void _finishEatReleate();
+public:
+	std::unordered_map<unsigned int, BBPlayerNode*> mapPlayNodes; //玩家的球
+	std::vector<int> playerIds;
+	std::unordered_map<unsigned int, BBPlayer*> mapPlayers;//玩家
+
 private:
 	BBGameManager * gameManager;
-	
+	unsigned int nextPlayerIdx;
 };
 
 #endif

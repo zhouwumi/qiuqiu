@@ -4,49 +4,52 @@
 #include "BBVector.h"
 #include<vector>
 #include<unordered_map>
+#include "BBFrameData.h"
 
+class BBPlayer;
+class BBGameManager;
 
-class PlayerNode : public MovingBall
+class BBPlayerNode : public MovingBall
 {
 public:
-	PlayerNode();
-	~PlayerNode();
+	BBPlayerNode();
+	~BBPlayerNode();
 
 	void ChangeCd(int timeDelta);
 
-	BBVector& InitMove();
-	void CalculateInitMoveParams(int radius, int frame, int initSpeed, int finalSpeed);
+	void InitMove();
+	void CalculateInitMoveParams(int radius, int frame, int initSpeed);
 	unsigned int GetCrc();
+	void Move(BBGameManager* gameManager);
+	void Eat(BBGameManager* gameManager);
+	void EatFoodSpikySporeChangeMass(BBGameManager* gameManager);
+
+	virtual void SetSpeedVec(double targetX, double targetY);
+
+	int SpikySplit(BBGameManager* gameManager, int maxChildNode, int spikyMass);
+	BBPlayerNode* SelfSplit(BBGameManager* gameManager);
+
+	void clientCatchup() {};
+	void CalcBallDelta();
+	virtual int GetRenderX();
+	virtual int GetRenderY();
+
+	//client
+	void ClientSyncServerPlayerNode(int fromId, int x, int y, int mass, int cd, int protect, int initStopFrame, int initSpeed, int initDeltaSpeed, int speedX, int speedY);
+private:
+	BBVector _stepMove();
+	bool _handleNodeHit(BBVector& locVec);
 public:
-	int Uid;
-	int Cd;//不能融合的CD
-	int Protect;//刚出生的球不能被吃和不能吃别人的CD
-	//初始的一些参数记录		
+	unsigned int uid;
+	int cd;//不能融合的CD
+	int protect;//刚出生的球不能被吃和不能吃别人的CD
+
+	//初始的一些参数记录
+	int initStopFrame; //停下来降为0的帧数
 	int initSpeed;
 	int initDeltaSpeed;
-};
 
-class Player
-{
-public:
-	Player(int id);
-	~Player();
-
-	void ResetPoint(int x, int y);
-	void UpdateFinalPoint(int x, int y);
-
-	BBRect GetGroupRect();
-	void RemoveMass();
-
-	unsigned int GetCrc();
-public:
-	std::vector<PlayerNode*> vecPlayerNodes;
-
-	int uid;
-	bool Stopped;
-	BBPoint FinalPoint;
-	BBVector Direction;
-	int NMass;
+	BBPlayer* player;
 };
 
 #endif

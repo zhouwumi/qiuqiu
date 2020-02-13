@@ -3,34 +3,70 @@
 
 #include<vector>
 #include "BaseFrameSyncData.h"
-
 using namespace std;
 
-class BBSyncBallData
+class BBFrameBallData
 {
 public:
-	BBSyncBallData();
-	~BBSyncBallData();
+	BBFrameBallData();
+	~BBFrameBallData();
 
 public:
-	int uniqueId; //absolute unique
+	int idx; //absolute unique
 	int mass; //mass
 	int fromId; //generate from id ball
 	int uid; // belong player
 	int cd; //cd fusion cd time
-	int springTime; // spring move time
-	int springSpeed;
-	int springDeltaSpeed;
 	int protect; //birth can't eat and beEat time
+	int initStopFrame; // spring move time
+	int initSpeed;
+	int initDeltaSpeed;
+	int locationX;
+	int locationY;
 };
 
-class BBFrameData :public BaseFrameData
+class BBBallDeltaData
+{
+public:
+	BBBallDeltaData();
+	~BBBallDeltaData();
+public:
+	int wrapTicks;
+	BBVector location;
+	BBVector wrapLocationOffset;
+	BBVector fixedLocation;
+};
+
+//class BBPredictionData
+//{
+//public:
+//	BBPredictionData();
+//	~BBPredictionData();
+//	void ClearData();
+//	
+//public:
+//	std::deque<BBSimplePrediction> predictionCommands;
+//	int lastAngle;
+//	int lastPressure;
+//	bool mPredictionRight;
+//};
+
+class BBFrameData
 {
 public:
 	BBFrameData();
 	int uid;
 	int NMass;
-	vector<BBSyncBallData> ballDatas;
+	int ackCommand;
+	int angle;
+	int pressure;
+	int nextNodeIdx;
+	bool Stopped;
+	int finalPointX;
+	int finalPointY;
+	vector<BBFrameBallData> ballDatas;
 };
+
+
 
 #endif //BB_FRAME_DATA_H

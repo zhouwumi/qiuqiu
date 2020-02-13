@@ -1,18 +1,28 @@
 #include "BBFrameData.h"
-
-
-
-BBSyncBallData::BBSyncBallData()
+BBFrameBallData::BBFrameBallData()
 {
 }
 
 
-BBSyncBallData::~BBSyncBallData()
+BBFrameBallData::~BBFrameBallData()
 {
 }
 
+BBBallDeltaData::BBBallDeltaData():
+	wrapTicks(0)
+{
+	location = BBVector::ZERO;
+	wrapLocationOffset = BBVector::ZERO;
+	fixedLocation = BBVector::ZERO;
+}
+
+BBBallDeltaData::~BBBallDeltaData()
+{
+	
+}
 
 BBFrameData::BBFrameData()
 {
 
 }
+

@@ -6,13 +6,14 @@ class BBRect
 {
 public:
 	BBRect();
-	BBRect(int minX, float minY, int maxX, int maxY);
+	BBRect(int minX, double minY, int maxX, int maxY);
 	BBRect(const BBRect& other);
 	BBRect& operator= (const BBRect& other);
 	void setRect(int minX, int minY, int maxX, int maxY);
 
 	BBRect expand(int expandW, int expandH);
 	bool intersectsRect(const BBRect& rect) const;
+	bool intersctsRect(int minX, int maxX, int minY, int maxY) const;
 	bool intersectsCircle(const BBPoint& center, int radius) const;
 
 	~BBRect() = default;

@@ -20,7 +20,7 @@ void GridMap::SetMap(int w, int h, int pDepth, int objNum)
 	int size = pow(2, 2 * depth - 2);
 	gridNodes.resize(size);
 	sideSizeLen = pow(2, depth - 1);
-	sideLen = (float)mapW / sideSizeLen;
+	sideLen = (double)mapW / sideSizeLen;
 	for (int i = 0; i < sideSizeLen; i++)
 	{
 		for (int j = 0; j < sideSizeLen; j++)
@@ -47,7 +47,7 @@ void GridMap::AddObjectGridKey(BaseCircleNode* node, int gridX, int gridY)
 	if (gridNodes.size() > index)
 	{
 		GridNode& gridNode = gridNodes[index];
-		gridNode.objectIdxs.emplace(node->Idx, node);
+		gridNode.objectIdxs.emplace(node->idx, node);
 		mapAllObjects[node] = index;
 	}
 }
@@ -67,7 +67,7 @@ void GridMap::RemoveObject(BaseCircleNode* node)
 		if (gridNodes.size() > gridIdx)
 		{
 			GridNode& gridNode = gridNodes[gridIdx];
-			gridNode.objectIdxs.erase(node->Idx);
+			gridNode.objectIdxs.erase(node->idx);
 		}
 		mapAllObjects.erase(node);
 	}

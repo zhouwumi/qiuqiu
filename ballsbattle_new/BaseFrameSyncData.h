@@ -6,7 +6,7 @@
 
 enum CheckSum
 {
-	CHECKSUM_MISMATCH = -1
+	CHECKSUM_MISMATCH = 1
 };
 
 class BaseCommand
@@ -15,8 +15,8 @@ public:
 	BaseCommand();
 public:
 	int id;
-	int sendCount;
-	int checkSum;
+	int sendCount; // client
+	int checkSum; // client server
 };
 
 class BaseFrameData
@@ -27,10 +27,10 @@ public:
 	BaseFrameData();
 };
 
-class BaseFrameDelta
+class BaseFrameDataDelta
 {
 public:
-	BaseFrameDelta();
+	BaseFrameDataDelta();
 	BaseCommand lastCommand;
 	BBPoint pos;
 	BBVector velocity;

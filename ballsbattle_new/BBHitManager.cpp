@@ -13,20 +13,20 @@ BBHitManager::~BBHitManager()
 {
 }
 
-void BBHitManager::GetCanEatFood(PlayerNode* playerNode, std::vector<int>& vec)
+void BBHitManager::GetCanEatFood(BBPlayerNode* playerNode, std::vector<int>& vec)
 {
 	if (!gameManager)
 	{
 		return;
 	}
-	if (gameManager->frameCacheManager.RemovedNodes.find(playerNode->Idx) != gameManager->frameCacheManager.RemovedNodes.end())
+	if (gameManager->frameOutManager.IsNodeHasBeEat(playerNode->idx))
 	{
 		return;
 	}
 	TempVec.clear();
 	//gameManager->FoodTree.GetAllHitCircleNodeIdxs(playerNode->treeIndex, TempVec);
 	int gripRadius = 0;
-	if (playerNode->Protect > 0)
+	if (playerNode->protect > 0)
 	{
 		gripRadius = BBConst::GripRadius;
 	}
@@ -37,26 +37,24 @@ void BBHitManager::GetCanEatFood(PlayerNode* playerNode, std::vector<int>& vec)
 	for (int i = 0; i < TempVec.size(); i++)
 	{
 		int idx = TempVec[i];
-		if (gameManager->foodSpikyManager.mapFoodIdxs.find(idx) != gameManager->foodSpikyManager.mapFoodIdxs.end())
+		auto iter = gameManager->foodSpikyManager.mapFoodIdxs.find(idx);
+		if (iter != gameManager->foodSpikyManager.mapFoodIdxs.end())
 		{
-			Food* food = gameManager->foodSpikyManager.mapFoodIdxs[idx];
-			int foodX = food->Location.x;
-			int foodY = food->Location.y;
+			Food* food = iter->second;
 
-			int deltaX = playerNode->Location.x - foodX;
-			int deltaY = playerNode->Location.y - foodY;
+			int deltaX = playerNode->location.x - food->location.x;
+			int deltaY = playerNode->location.y - food->location.y;
 			if (pow(deltaX, 2) + pow(deltaY, 2) <= pow(playerNode->GetRadius() + gripRadius, 2))
 			{
-				vec.emplace_back(playerNode->Idx);
 				vec.emplace_back(idx);
 			}
 		}
 	}
 }
 
-void BBHitManager::GetCanEatSpiky(PlayerNode* playerNode, std::vector<int>& vec)
+void BBHitManager::GetCanEatSpiky(BBPlayerNode* playerNode, std::vector<int>& vec)
 {
-	if (gameManager->frameCacheManager.RemovedNodes.find(playerNode->Idx) != gameManager->frameCacheManager.RemovedNodes.end())
+	if (gameManager->frameOutManager.IsNodeHasBeEat(playerNode->idx))
 	{
 		return;
 	}
@@ -65,21 +63,17 @@ void BBHitManager::GetCanEatSpiky(PlayerNode* playerNode, std::vector<int>& vec)
 
 	gameManager->foodSpikyManager.SpikyGridMap.GetAllHitIdxs(TempPlayerRect, TempVec);
 	std::sort(TempVec.begin(), TempVec.end());
-	float delta = (float)BBConst::Delta / BBConst::DeltaBase;
+	double delta = (double)BBConst::Delta / BBConst::DeltaBase;
 	for (int i = 0; i < TempVec.size(); i++)
 	{
 		int idx = TempVec[i];
 		if (gameManager->foodSpikyManager.mapSpikyBalls.find(idx) != gameManager->foodSpikyManager.mapSpikyBalls.end())
 		{
 			SpikyBall* ball = gameManager->foodSpikyManager.mapSpikyBalls[idx];
-			int foodX = ball->Location.x;
-			int foodY = ball->Location.y;
-
-			int deltaX = playerNode->Location.x - foodX;
-			int deltaY = playerNode->Location.y - foodY;
+			int deltaX = playerNode->location.x - ball->location.x;
+			int deltaY = playerNode->location.y - ball->location.y;
 			if (ball->GetRadius() * (1 + delta) < playerNode->GetRadius() && pow(deltaX, 2) + pow(deltaY, 2) <= pow(playerNode->GetRadius(), 2))
 			{
-				vec.emplace_back(playerNode->Idx);
 				vec.emplace_back(idx);
 				vec.emplace_back(ball->GetBallMass());
 			}
@@ -87,25 +81,25 @@ void BBHitManager::GetCanEatSpiky(PlayerNode* playerNode, std::vector<int>& vec)
 	}
 }
 
-void BBHitManager::GetCanEatFood(Player* player, std::vector<int>& vec)
+void BBHitManager::GetCanEatFood(BBPlayer* player, std::vector<int>& vec)
 {
 	if (!player)
 	{
 		return;
 	}
-	for (PlayerNode* node : player->vecPlayerNodes)
+	for (BBPlayerNode* node : player->vecPlayerNodes)
 	{
 		GetCanEatFood(node, vec);
 	}
 }
 
-void BBHitManager::GetCanEatSpiky(Player* player, std::vector<int>& vec)
+void BBHitManager::GetCanEatSpiky(BBPlayer* player, std::vector<int>& vec)
 {
 	if (!player)
 	{
 		return;
 	}
-	for (PlayerNode* node : player->vecPlayerNodes)
+	for (BBPlayerNode* node : player->vecPlayerNodes)
 	{
 		GetCanEatSpiky(node, vec);
 	}
@@ -131,9 +125,9 @@ void BBHitManager::GetCanEatSpiky(int playerId, std::vector<int>& vec)
 	GetCanEatSpiky((*iter).second, vec);
 }
 
-void BBHitManager::GetCanEatNodeOrSpore(PlayerNode* playerNode, std::vector<int>& nodeIdxs, std::vector<int>& sporeIdxs)
+void BBHitManager::GetCanEatNodeOrSpore(BBPlayerNode* playerNode, std::vector<int>& nodeIdxs, std::vector<int>& sporeIdxs)
 {
-	if (gameManager->frameCacheManager.RemovedNodes.find(playerNode->Idx) != gameManager->frameCacheManager.RemovedNodes.end())
+	if (gameManager->frameOutManager.IsNodeHasBeEat(playerNode->idx))
 	{
 		return;
 	}
@@ -143,17 +137,17 @@ void BBHitManager::GetCanEatNodeOrSpore(PlayerNode* playerNode, std::vector<int>
 	gameManager->NodeTree.GetAllHitCircleNodeIdxs(TempPlayerRect, TempVec);
 	std::sort(TempVec.begin(), TempVec.end());
 
-	float delta = (float)BBConst::Delta / BBConst::DeltaBase;
+	double delta = (double)BBConst::Delta / BBConst::DeltaBase;
 	for (int i = 0; i < TempVec.size(); i++)
 	{
 		int idx = TempVec[i];
 		if (gameManager->playerManager.mapPlayNodes.find(idx) != gameManager->playerManager.mapPlayNodes.end())
 		{
-			if (playerNode->Protect > 0)
+			if (playerNode->protect > 0)
 			{
 				continue;
 			}
-			PlayerNode* targetNode = gameManager->playerManager.mapPlayNodes[idx];
+			BBPlayerNode* targetNode = gameManager->playerManager.mapPlayNodes[idx];
 			_tryEatNode(playerNode, targetNode, nodeIdxs);
 		}
 		else if (gameManager->sporeManager.mapSpores.find(idx) != gameManager->sporeManager.mapSpores.end())
@@ -165,77 +159,71 @@ void BBHitManager::GetCanEatNodeOrSpore(PlayerNode* playerNode, std::vector<int>
 	}
 }
 
-void BBHitManager::_tryEatSpore(PlayerNode* playerNode, Spore* targetSpore, std::vector<int>& nodeIdxs)
+void BBHitManager::_tryEatSpore(BBPlayerNode* playerNode, Spore* targetSpore, std::vector<int>& nodeIdxs)
 {
-	if (targetSpore->FromId == playerNode->Idx && targetSpore->Cd > 0)
+	if (!gameManager->GetCanEatSpore())
+	{
+		return;
+	}
+	if (targetSpore->fromId == playerNode->idx && targetSpore->cd > 0)
 	{
 		return;
 	}
 
-	int foodX = targetSpore->Location.x;
-	int foodY = targetSpore->Location.y;
-
-	int deltaX = playerNode->Location.x - foodX;
-	int deltaY = playerNode->Location.y - foodY;
+	int deltaX = playerNode->location.x - targetSpore->location.x;
+	int deltaY = playerNode->location.y - targetSpore->location.y;
 	if (pow(deltaX, 2) + pow(deltaY, 2) <= pow(playerNode->GetRadius(), 2))
 	{
-		nodeIdxs.emplace_back(playerNode->Idx);
-		nodeIdxs.emplace_back(targetSpore->Idx);
+		nodeIdxs.emplace_back(targetSpore->idx);
 		nodeIdxs.emplace_back(targetSpore->GetBallMass());
-
 	}
 }
 
-void BBHitManager::_tryEatNode(PlayerNode* playerNode, PlayerNode* targetNode, std::vector<int>& nodeIdxs)
+void BBHitManager::_tryEatNode(BBPlayerNode* playerNode, BBPlayerNode* targetNode, std::vector<int>& nodeIdxs)
 {
-	if (playerNode->Protect > 0)
+	if (!gameManager->GetCanEatNode())
 	{
 		return;
 	}
-	if (targetNode->Protect > 0)
+
+	if (playerNode->protect > 0)
 	{
 		return;
 	}
-	if (playerNode->Idx == targetNode->Idx)
+	if (targetNode->protect > 0)
 	{
 		return;
 	}
-	auto& removeNodes = gameManager->frameCacheManager.RemovedNodes;
-	if (removeNodes.find(targetNode->Idx) != removeNodes.end())
+	if (playerNode->idx == targetNode->idx)
 	{
 		return;
 	}
-	if (playerNode->Uid == targetNode->Uid)
+	if (gameManager->frameOutManager.IsNodeHasBeEat(targetNode->idx))
 	{
-		if (playerNode->Cd > 0)
+		return;
+	}
+	
+	if (playerNode->uid == targetNode->uid)
+	{
+		if (playerNode->cd > 0)
 		{
 			return;
 		}
-		if (targetNode->Cd > 0)
+		if (targetNode->cd > 0)
 		{
 			return;
 		}
 	}
 
-	float delta = (float)BBConst::Delta / BBConst::DeltaBase;
-	int foodX = targetNode->Location.x;
-	int foodY = targetNode->Location.y;
+	double delta = (double)BBConst::Delta / BBConst::DeltaBase;
 
-	int deltaX = playerNode->Location.x - foodX;
-	int deltaY = playerNode->Location.y - foodY;
+	int deltaX = playerNode->location.x - targetNode->location.x;
+	int deltaY = playerNode->location.y - targetNode->location.y;
 	if (targetNode->GetRadius() * (1 + delta) < playerNode->GetRadius() && pow(deltaX, 2) + pow(deltaY, 2) <= pow(playerNode->GetRadius(), 2))
 	{
-		nodeIdxs.emplace_back(playerNode->Idx);
-		nodeIdxs.emplace_back(targetNode->Idx);
+		nodeIdxs.emplace_back(targetNode->player->uid);
+		nodeIdxs.emplace_back(targetNode->idx);
 		nodeIdxs.emplace_back(targetNode->GetBallMass());
-
-		gameManager->frameCacheManager.SetRemoved(targetNode->Idx, playerNode->Idx);
-		if (playerNode->Uid == targetNode->Uid)
-		{
-			gameManager->frameCacheManager.AddCd(playerNode->Idx, playerNode->Uid);
-		}
-		gameManager->frameCacheManager.AddKiller(targetNode->Uid, playerNode->Uid);
-		gameManager->frameCacheManager.AddEatenNode(targetNode->Idx, playerNode->Idx);
 	}
 }
 
@@ -280,6 +268,11 @@ void BBHitManager::FindFreeSpikyPos(int& returnMass, int& returnX, int& returnY)
 
 			if (!hasHit)
 			{
+				if (gameManager->foodSpikyManager.mapSpikyBalls.size() == 0)
+				{
+					x = 700;
+					y = 500;
+				}
 				returnMass = mass;
 				returnX = x;
 				returnY = y;
@@ -294,11 +287,11 @@ bool BBHitManager::FindFreeFoodPos(int& returnX, int& returnY)
 {
 	//int gridIdx = BBMathUtils::GetRandom(0, gameManager->FoodGridMap.gridNodes.size() - 1);
 
-	int x = BBMathUtils::GetRandom(1, BBConst::MaxWidth - 1);
-	int y = BBMathUtils::GetRandom(1, BBConst::MaxHeight - 1);
+	int x = BBMathUtils::GetRandom(5, BBConst::MaxWidth - 5);
+	int y = BBMathUtils::GetRandom(5, BBConst::MaxHeight - 5);
 	//int posKey = y * BBConst::MaxWidth + x;
 	int posKey = BBMathUtils::xy_to_location(x, y);
-	if (gameManager->foodSpikyManager.mapFoodPos.find(posKey) == gameManager->foodSpikyManager.mapFoodPos.end())
+	if (gameManager->foodSpikyManager.mapFoodIdxs.find(posKey) == gameManager->foodSpikyManager.mapFoodIdxs.end())
 	{
 		returnX = x;
 		returnY = y;
@@ -323,9 +316,8 @@ void BBHitManager::FindFreePlayerNodePos(int radius, int& returnX, int& returnY)
 		{
 			isFirstRandom = false;
 		}
-		int fixedX, fixedY;
-		bool isFixedX, isFixedY;
-		BBMathUtils::FixCircle(gameManager->mapRect, x, y, radius, fixedX, fixedY, isFixedX, isFixedY);
+		double fixedX, fixedY;
+		BBMathUtils::FixCircle(gameManager->mapRect, x, y, radius, fixedX, fixedY);
 
 		TempRect.setRect(fixedX - radius, fixedY - radius, fixedX + radius, fixedY + radius);
 		TempVec.clear();
@@ -382,8 +374,8 @@ void BBHitManager::FindFreePlayerNodePos(int radius, int& returnX, int& returnY)
 		}
 		if (!hasHit)
 		{
-			returnX = x;
-			returnY = y;
+			returnX = fixedX;
+			returnY = fixedY;
 			break;
 		}
 	}

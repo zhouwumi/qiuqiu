@@ -1,5 +1,5 @@
-#ifndef BB_CONST_CPP
-#define BB_CONST_CPP
+#ifndef BB_CONST_H
+#define BB_CONST_H
 
 #define BB_M_PI       3.14159
 #define BB_MATH_TOLERANCE              2e-37f
@@ -63,6 +63,8 @@ public:
 	static const int MaxPartition;
 
 	static const int SpikyTime;
+
+	static const int DebugDefaultNodeMass;
 };
 
 #endif

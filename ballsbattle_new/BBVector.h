@@ -4,25 +4,25 @@ class BBVector
 {
 public:
 	BBVector();
-	BBVector(float _x, float _y);
+	BBVector(double _x, double _y);
 	BBVector(const BBVector& other);
 	BBVector& operator= (const BBVector& other);
 
 	~BBVector();
 
-	float Dot(const BBVector& v) const;
-	static float Dot(const BBVector& v1, const BBVector& v2);
+	double Dot(const BBVector& v) const;
+	static double Dot(const BBVector& v1, const BBVector& v2);
 
-	float GetAngle();
+	double GetAngle();
 
-	static BBVector GetFixedVetor2(BBVector v, float length);
+	static BBVector GetFixedVetor2(BBVector v, double length);
 	static BBVector GetDeltaVector(BBVector startVec, BBVector endVec, int frame);
 
 	void Negate();
 	void Normalize();
 	BBVector GetNormalized() const;
 
-	void Scale(float scalar);
+	void Scale(double scalar);
 	void Subtract(const BBVector& v);
 	void Add(const BBVector& v);
 
@@ -36,21 +36,21 @@ public:
 
 	inline BBVector operator-() const;
 
-	inline BBVector operator*(float s) const;
+	inline BBVector operator*(double s) const;
 
-	 BBVector& operator*=(float s);
+	 BBVector& operator*=(double s);
 
-	inline BBVector operator/(float s) const;
+	inline BBVector operator/(double s) const;
 
 	 bool operator==(const BBVector& v) const;
 	 bool operator!=(const BBVector& v) const;
 
-	void SetPoint(float _x, float _y);
+	void SetPoint(double _x, double _y);
 
 	static const BBVector ZERO;
 public:
-	float x;
-	float y;
+	double x;
+	double y;
 };
 
 #endif

@@ -24,7 +24,6 @@ void BBFoodSpikyManager::ClearAllFood()
 		iter.second = NULL;
 	}
 	mapFoodIdxs.clear();
-	mapFoodPos.clear();
 	FoodGridMap.Clear();
 }
 
@@ -33,22 +32,7 @@ void BBFoodSpikyManager::RemoveFoodByIdx(int idx)
 	if (mapFoodIdxs.find(idx) != mapFoodIdxs.end())
 	{
 		Food* food = mapFoodIdxs[idx];
-		int posKey = food->posKey;
 		mapFoodIdxs.erase(idx);
-		mapFoodPos.erase(posKey);
-		FoodGridMap.RemoveObject(food);
-		delete food;
-	}
-}
-
-void BBFoodSpikyManager::RemoveFoodByPos(int posKey)
-{
-	if (mapFoodPos.find(posKey) != mapFoodPos.end())
-	{
-		Food* food = mapFoodPos[posKey];
-		int idx = food->Idx;
-		mapFoodIdxs.erase(idx);
-		mapFoodPos.erase(posKey);
 		FoodGridMap.RemoveObject(food);
 		delete food;
 	}
@@ -97,11 +81,10 @@ int BBFoodSpikyManager::ServerCreateFood()
 	if (gameManager->hitManager.FindFreeFoodPos(x, y))
 	{
 		Food* food = gameManager->objectManager.CreateFood(x, y);
-		mapFoodPos.emplace(food->posKey, food);
-		mapFoodIdxs.emplace(food->Idx, food);
+		mapFoodIdxs.emplace(food->idx, food);
 
 		FoodGridMap.AddObjectMapKey(food, x, y);
-		return food->Idx;
+		return food->idx;
 	}
 	return 0;
 }
@@ -113,19 +96,17 @@ int BBFoodSpikyManager::ServerCreateSpiky()
 	gameManager->hitManager.FindFreeSpikyPos(mass, x, y);
 
 	SpikyBall* newSpikyBall = gameManager->objectManager.CreateSpikyBall(x, y, mass);
-	mapSpikyBalls.emplace(newSpikyBall->Idx, newSpikyBall);
+	mapSpikyBalls.emplace(newSpikyBall->idx, newSpikyBall);
 	SpikyGridMap.AddObjectMapKey(newSpikyBall, x, y);
-	return newSpikyBall->Idx;
+	return newSpikyBall->idx;
 }
 
-void BBFoodSpikyManager::ClientAddNewFoodFromServer(int idx, int posKey)
+void BBFoodSpikyManager::ClientAddNewFoodFromServer(int posKey)
 {
 	int x, y;
 	BBMathUtils::location_to_xy(posKey, x, y);
-
 	Food* food = gameManager->objectManager.CreateFood(x, y);
-	mapFoodPos.emplace(posKey, food);
-	mapFoodIdxs.emplace(food->Idx, food);
+	mapFoodIdxs.emplace(posKey, food);
 
 	FoodGridMap.AddObjectMapKey(food, x, y);
 }
@@ -136,81 +117,20 @@ void BBFoodSpikyManager::ClientAddNewSpikyFromServer(int idx, int posKey, int ma
 	BBMathUtils::location_to_xy(posKey, x, y);
 
 	SpikyBall* newSpikyBall = gameManager->objectManager.CreateSpikyBall(x, y, mass, idx);
-	mapSpikyBalls.emplace(newSpikyBall->Idx, newSpikyBall);
+	mapSpikyBalls.emplace(newSpikyBall->idx, newSpikyBall);
 	SpikyGridMap.AddObjectMapKey(newSpikyBall, x, y);
-}
-
-std::vector<int> BBFoodSpikyManager::ClientGenerateFood(int num)
-{
-	std::vector<int> vec;
-
-	for (int i = 0; i < num; i++)
-	{
-		int x, y;
-		if (gameManager->hitManager.FindFreeFoodPos(x, y))
-		{
-			Food* food = gameManager->objectManager.CreateFood(x, y);
-			mapFoodPos.emplace(food->posKey, food);
-			mapFoodIdxs.emplace(food->Idx, food);
-			FoodGridMap.AddObjectMapKey(food, x, y);
-			vec.emplace_back(food->Idx);
-			vec.emplace_back(food->posKey);
-		}
-	}
-	ClearAllFood();
-	return vec;
-}
-std::vector<int> BBFoodSpikyManager::ClientGenerateSpiky(int num)
-{
-	std::vector<int> vec;
-
-	for (int i = 0; i < num; i++)
-	{
-		int x, y;
-		int mass;
-		gameManager->hitManager.FindFreeSpikyPos(mass, x, y);
-
-		SpikyBall* newSpikyBall = gameManager->objectManager.CreateSpikyBall(x, y, mass);
-		mapSpikyBalls.emplace(newSpikyBall->Idx, newSpikyBall);
-		SpikyGridMap.AddObjectMapKey(newSpikyBall, x, y);
-
-		//int posKey = y * BBConst::MaxWidth + x;
-		int posKey = BBMathUtils::xy_to_location(x, y);
-		vec.emplace_back(newSpikyBall->Idx);
-		vec.emplace_back(posKey);
-		vec.emplace_back(mass);
-	}
-	ClearAllSpiky();
-	return vec;
 }
 
 std::vector<int> BBFoodSpikyManager::GetAllFoodInfos()
 {
 	std::vector<int> ret;
-	for (auto iter : mapFoodPos)
+	for (auto iter : mapFoodIdxs)
 	{
 		ret.emplace_back(iter.first);
 	}
 	return ret;
 }
 
-int BBFoodSpikyManager::GetFoodIdxByPos(int pos)
-{
-	if (mapFoodPos.find(pos) == mapFoodPos.end())
-	{
-		return 0;
-	}
-	return mapFoodPos[pos]->Idx;
-}
-
-int BBFoodSpikyManager::GetFoodPosByIdx(int idx)
-{
-	if (mapFoodIdxs.find(idx) == mapFoodIdxs.end())
-	{
-		return 0;
-	}
-	return mapFoodIdxs[idx]->posKey;
-}
 
 SpikyBall* BBFoodSpikyManager::GetSpikyInfo(int idx)
 {
@@ -252,7 +172,7 @@ void BBFoodSpikyManager::ServerCheckRegenFood()
 		if (curFrame >= nextFrame)
 		{
 			int newIdx = ServerCreateSpiky();
-			gameManager->frameCacheManager.NotifyClientNewSpikyCommad(newIdx);
+			gameManager->frameOutManager.AddNewSpiky(newIdx);
 			SpikyRefresh.pop_front();
 		}
 		else
@@ -266,7 +186,7 @@ void BBFoodSpikyManager::ServerCheckRegenFood()
 		int idx = ServerCreateFood();
 		if (idx != 0 && mapFoodIdxs.find(idx) != mapFoodIdxs.end())
 		{
-			gameManager->frameCacheManager.NotifyClientNewFoodCommand(idx);
+			gameManager->frameOutManager.AddNewFood(idx);
 		}
 	}
 }
@@ -277,7 +197,7 @@ unsigned int BBFoodSpikyManager::GetAllFoodCrc()
 	unsigned int index = 0;
 
 	std::vector<unsigned int> idxs;
-	for (auto iter : mapFoodPos)
+	for (auto iter : mapFoodIdxs)
 	{
 		idxs.emplace_back(iter.first);
 	}
@@ -285,9 +205,9 @@ unsigned int BBFoodSpikyManager::GetAllFoodCrc()
 	for (int i = 0; i < idxs.size(); i++)
 	{
 		int id = idxs[i];
-		Food* food = mapFoodPos[id];
-		foodBuffer[index++] = food->Location.x;
-		foodBuffer[index++] = food->Location.y;
+		Food* food = mapFoodIdxs[id];
+		foodBuffer[index++] = food->location.x;
+		foodBuffer[index++] = food->location.y;
 	}
 	
 	unsigned int size = index * sizeof(int) / sizeof(char);
@@ -310,8 +230,8 @@ unsigned int BBFoodSpikyManager::GetAllSpikyCrc()
 	{
 		int id = idxs[i];
 		SpikyBall* ball = mapSpikyBalls[id];
-		spikyBuffer[index++] = ball->Location.x;
-		spikyBuffer[index++] = ball->Location.y;
+		spikyBuffer[index++] = ball->location.x;
+		spikyBuffer[index++] = ball->location.y;
 	}
 
 	unsigned int size = index * sizeof(int) / sizeof(char);

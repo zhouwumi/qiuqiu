@@ -7,8 +7,6 @@ class Food : public BaseCircleNode
 public:
 	Food();
 	~Food();
-public:
-	unsigned int posKey;
 };
 
 //球

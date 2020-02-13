@@ -7,7 +7,7 @@ BBRect::BBRect()
 	setRect(0, 0, 0, 0);
 }
 
-BBRect::BBRect(int minX, float minY, int maxX, int maxY)
+BBRect::BBRect(int minX, double minY, int maxX, int maxY)
 {
 	setRect(minX, minY, maxX, maxY);
 }
@@ -47,7 +47,12 @@ BBRect BBRect::expand(int expandW, int expandH)
 
 bool BBRect::intersectsRect(const BBRect& rect) const
 {
-	return !(maxX > rect.minX || rect.maxX < minX || maxY < rect.minY || rect.maxY < minY);
+	return !(maxX < rect.minX || minX > rect.maxX || maxY < rect.minY || minY > rect.maxY);
+}
+
+bool BBRect::intersctsRect(int minX, int maxX, int minY, int maxY) const
+{
+	return !(this->maxX < minX || this->minX > maxX || this->maxY < minY || this->minY > maxY);
 }
 
 bool BBRect::intersectsCircle(const BBPoint& center, int radius) const

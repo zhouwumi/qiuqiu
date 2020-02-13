@@ -1,7 +1,7 @@
 #ifndef BASE_CIRCLE_NODE_CPP
 #define BASE_CIRCLE_NODE_CPP
 
-#include "BBPoint.h"
+#include "BBVector.h"
 #include "BBRect.h"
 
 class BaseCircleNode
@@ -19,23 +19,23 @@ public:
 		treeIndex = newIdx;
 	}
 
-	virtual void ChangePosition(int x, int y);
+	virtual void ChangePosition(double x, double y);
 
 	inline int GetRadius() const
 	{
-		return _radius;
+		return radius;
 	}
 	inline void SetRadius(int radius)
 	{
-		_radius = radius;
+		this->radius = radius;
 	}
 
 public:
-	BBPoint Location;
+	BBVector location;
 	BBRect rect;
-	unsigned int Idx;
+	unsigned int idx;
 	unsigned int treeIndex;
-	int _radius;
+	int radius;
 };
 
 #endif

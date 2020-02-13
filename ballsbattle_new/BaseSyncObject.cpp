@@ -34,12 +34,13 @@ void BaseSyncObject::clientReadFrameData(BaseFrameData frameData)
 BaseFrameData BaseSyncObject::packUpdate()
 {
 	BaseFrameData ret;
+	ret.pos = mPos;
+	ret.velocity = mVelocity;
 	return ret;
 }
 
 void BaseSyncObject::unPackUpdate(BaseFrameData frameData)
 {
-
 }
 
 void BaseSyncObject::clientCatchup()

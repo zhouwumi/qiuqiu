@@ -27,8 +27,10 @@ public:
 	int id;
 	BBPoint mPos;
 	BBVector mVelocity;
+	BBPoint mLocalPos;
+	BBPoint mLocalVelocity;
 	int mPredictionCount;
-	BaseFrameDelta mDelta;
+	BaseFrameDataDelta mDelta;
 	CommandList mCommandList;
 };
 

@@ -7,7 +7,7 @@ BBVector::BBVector()
 	SetPoint(0, 0);
 }
 
-BBVector::BBVector(float _x, float _y)
+BBVector::BBVector(double _x, double _y)
 {
 	SetPoint(_x, _y);
 }
@@ -23,23 +23,23 @@ BBVector& BBVector::operator= (const BBVector& other)
 	return *this;
 }
 
-float BBVector::Dot(const BBVector& v) const
+double BBVector::Dot(const BBVector& v) const
 {
 	return x * v.x + y * v.y;
 }
 
-float BBVector::Dot(const BBVector& v1, const BBVector& v2)
+double BBVector::Dot(const BBVector& v1, const BBVector& v2)
 {
 	return v1.x * v2.x + v1.y * v2.y;
 }
 
-float BBVector::GetAngle()
+double BBVector::GetAngle()
 {
 	if (*this == BBVector::ZERO)
 	{
 		return 0;
 	}
-	float result = 180 * atan2f(this->y, this->x) / BB_M_PI;
+	double result = 180 * atan2f(this->y, this->x) / BB_M_PI;
 	if (result < 0)
 	{
 		result += 360;
@@ -47,14 +47,14 @@ float BBVector::GetAngle()
 	return result;
 }
 
-BBVector BBVector::GetFixedVetor2(BBVector v, float length)
+BBVector BBVector::GetFixedVetor2(BBVector v, double length)
 {
 	if (v == BBVector::ZERO)
 	{
 		return BBVector::ZERO;
 	}
-	/*float radian;
-	float absRadian = atan2f(fabs(v.y), fabs(v.x));
+	/*double radian;
+	double absRadian = atan2f(fabs(v.y), fabs(v.x));
 	if (v.x >= 0 && v.y >= 0) {
 		radian = absRadian;
 	}
@@ -68,12 +68,10 @@ BBVector BBVector::GetFixedVetor2(BBVector v, float length)
 		radian = 2 * BB_M_PI - absRadian;
 	}
 	return BBVector(cosf(radian) * length, sinf(radian) * length);*/
-	float vLen = sqrtf(v.x * v.x + v.y * v.y);
-	float xRate = v.x / vLen;
-	float yRate = v.y / vLen;
-	int x = xRate * length;
-	int y = yRate * length;
-	return BBVector(x, y);
+	double vLen = sqrtf(v.x * v.x + v.y * v.y);
+	double xRate = v.x / vLen;
+	double yRate = v.y / vLen;
+	return BBVector(xRate * length, yRate * length);
 }
 
 BBVector BBVector::GetDeltaVector(BBVector startVec, BBVector endVec, int frame)
@@ -85,7 +83,7 @@ BBVector BBVector::GetDeltaVector(BBVector startVec, BBVector endVec, int frame)
 	return BBVector((endVec.x - startVec.x) / frame, (endVec.y - startVec.y) / frame);
 }
 
-void BBVector::SetPoint(float _x, float _y)
+void BBVector::SetPoint(double _x, double _y)
 {
 	x = _x;
 	y = _y;
@@ -93,7 +91,7 @@ void BBVector::SetPoint(float _x, float _y)
 
 void BBVector::Normalize()
 {
-	float n = x * x + y * y;
+	double n = x * x + y * y;
 	if (n == 1.0f) {
 		return;
 	}
@@ -118,7 +116,7 @@ void BBVector::Negate()
 	y = -y;
 }
 
-void BBVector::Scale(float scalar)
+void BBVector::Scale(double scalar)
 {
 	x *= scalar;
 	y *= scalar;
@@ -169,20 +167,20 @@ BBVector BBVector::operator-() const
 	return result;
 }
 
-BBVector BBVector::operator*(float s) const
+BBVector BBVector::operator*(double s) const
 {
 	BBVector result(*this);
 	result.Scale(s);
 	return result;
 }
 
-BBVector& BBVector::operator*=(float s)
+BBVector& BBVector::operator*=(double s)
 {
 	Scale(s);
 	return *this;
 }
 
-BBVector BBVector::operator/(float s) const
+BBVector BBVector::operator/(double s) const
 {
 	return BBVector(x / s, y / s);
 }

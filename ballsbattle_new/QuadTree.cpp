@@ -198,7 +198,7 @@ void QuadTree::_getAllTreeNodeIdxs(const QuadTree* tree, std::vector<int>& idxs)
 	const QuadNode& node = tree->rootNode;
 	for (BaseCircleNode* BaseCircleNode : node.subNodes)
 	{
-		idxs.emplace_back(BaseCircleNode->Idx);
+		idxs.emplace_back(BaseCircleNode->idx);
 	}
 }
 

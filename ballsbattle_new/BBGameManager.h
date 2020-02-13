@@ -1,21 +1,22 @@
 #ifndef BB_GAME_MANAGER_CPP
 #define BB_GAME_MANAGER_CPP
 #include<unordered_map>
-#include"BBPlayerNode.h"
+#include "BBPlayerNode.h"
+#include "BBPlayer.h"
 #include"QuadTree.h"
 #include "BBHitManager.h"
 #include "BBObjectManager.h"
 #include "BBPlayerManager.h"
 #include<functional>
 #include "GridMap.h"
-#include "BBFrameCacheManager.h"
 #include "BBFoodSpikyManager.h"
 #include "BBSporeManager.h"
+#include "BBFrameOutManager.h"
+#include "BBFrameInManager.h"
 
 class BBGameManager
 {
 public:
-	static BBGameManager* Create();
 	static void Destory(BBGameManager* manager);
 
 	BBGameManager();
@@ -25,138 +26,80 @@ public:
 
 	void InitRoom();
 
-	//每帧更新
-	void OnFrameUpdate();
-	void OnKeyFrameUpdate();
-	void ClientKeyFrameUpdateBefore();
-	void ClientKeyFrameUpdate();
-	void DoPlayerSplit();
-	void ClientBeginSyncServerOperate(int serverKeyFrame);
-	void StartSimulate(int serverKeyFrame);
-	void OnSimulate(bool isSimulateKeyFrame);
-	void StopSimulate(int serverKeyFrame);
-	void EndUpdate();
 	void AddNodesCd();
-
-	//同步各种操作
-	void AddOperatePlayerJoin(int uid);//玩家加入
-	void AddOperatePlayerSplit(int uid);//玩家分裂
-	void AddOperateMove(int uid, int angle, int percent);//改变运动方向
-	void AddOperatePlayerQuit(int uid);
-	void AddOperatePlayerShoot(int uid);
-
-	int GetFoodIdxByPos(int pos);
-	int GetFoodPosByIdx(int idx);
+	void FrameUpdate();
+	
+	bool IsNeedSyncState(unsigned int uid);
+	bool CanSkipSyncState(unsigned int uid);
+	
+	void AddPlayerCommand(int uid, int angle, int pressure, bool isSplit, bool isShoot, int id, unsigned int checkSum);
+	void RemovePlayerCommand(unsigned int uid);
 	SpikyBall* GetSpikyInfo(int idx);
-	Spore* GetSporeInfo(int idx);
-	PlayerNode* GetPlayerNodeInfo(int idx);
-	Player* GetPlayer(int uid);
+	Spore* GetSpore(int idx);
+	BBPlayerNode* GetPlayerNode(int idx);
+	BBPlayer* GetPlayer(int uid);
 
-	void SetServerState(bool isServer)
+	std::vector<int> GetAllPlayerIdxInRect(int minX, int maxX, int minY, int maxY);
+	std::vector<int> GetAllPlayerNodeIdxs(int playerId);
+
+	std::vector<int> GetPlayerNodeIdx(int uid);
+	void SetNeedUpdatePlayers(std::vector<int> playerIds);	
+	inline void SetServerState(bool isServer)
 	{
 		this->isServer = isServer;
 	}
-	bool IsServer()
+	inline bool IsServer()
 	{
 		return this->isServer;
 	}
 
-	int GetGameFrame()
+	inline void SetUserId(int userId)
 	{
-		return gameFrame;
+		this->userId = userId;
 	}
 
-	void SetGameFrame(int serverGameFrame)
+	inline int GetUserId()
 	{
-		gameFrame = serverGameFrame;
+		return this->userId;
 	}
 
-	void SetNextObjectIdx(int nextIdx)
+
+	inline int GetGameFrame()
 	{
-		objectManager.SetServerNextObjIndex(nextIdx);
+		return mGameFrame;
 	}
 
-	int GetNextObjectIdx()
+	inline void SetCanEatFoodSpiky(bool can)
 	{
-		return objectManager.GetNextObjIdx();
+		canEatFoodSpiky = can;
+	}
+	inline bool GetCanEatFoodSpiky()
+	{
+		return canEatFoodSpiky;
 	}
 
-	int GetTimeMove()
+	inline void SetCanEatSpore(bool can)
 	{
-		return timeMove;
+		canEatSpore = can;
 	}
 
-	int GetTimeEat()
+	inline bool GetCanEatSpore()
 	{
-		return timeEat;
+		return canEatSpore;
 	}
 
-	int GetTimeHit()
+	inline void SetCanEatNode(bool can)
 	{
-		return timeHit;
+		canEatNode = can;
+	}
+	inline bool GetCanEatNode()
+	{
+		return canEatNode;
 	}
 
-	int GetUpdateCircle()
-	{
-		return timeUpdateCircle;
-	}
-	
-	int GetMovePlayer()
-	{
-		return timeMovePlayer;
-	}
-
-	int GetCrc(int playerId);
-	unsigned int GetAllPlayerCrc();
-	unsigned int GetAllFoodCrc();
-	unsigned int GetAllSpikyCrc();
-	unsigned int GetAllSporeCrc();
-
-	/***********************common接口***********************/
-
-	/***********************server接口***********************/	
-
-	void InitFoodSpiky();
-	std::vector<int> GetAllFoodInfos();
-	std::vector<int> GetAllSpikyInfos();
-	std::vector<int>& GetAllSporeInfos();
-	std::vector<int>& GetAllPlayerIdxs();
-	std::vector<int> GetAllPlayerNodeIdxs(int playerId);
-
-	std::vector < std::string> GetServerLog();
-	void ClearServerLog();
-
-	/***********************server接口***********************/
-
-
-	/***********************client接口***********************/
-
-	//客户端刚进来需要创建所有的食物和刺球
-	//return:如果不是一开始调用会返回false
-	//客户端提供的生成食物的接口,真实环境不用此接口
-	std::vector<int> ClientGenerateFood(int num);
-	std::vector<int> ClientGenerateSpiky(int num);
-
-	std::vector<int>& GetFrameNewPlayer();
-	std::vector<int> GetFrameNewPlayerNodeIdxs();
-	std::vector<int>& GetFrameRemovedPlayerNodeIdxs();
-	std::vector<int>& GetFrameNewFood();
-	std::vector<int>& GetFrameNewSpiky();
-	std::vector<int>& GetFrameNewSpore();
-	std::vector<int>& GetFrameEatResult()
-	{
-		return eatResults;
-	}
-	std::vector<int> GetPlayerNodeIdx(int uid);
-
-	void AddNewFoodFromServer(int posKey);
-	void AddNewSpikyFromServer(int idx, int posKey, int mass);
-	void AddNewSporeFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd);
-	void AddNewBallFromServer(int idx, int fromId, int uid, int mass, int x, int y, int directionX, int directionY, int currentX, int currentY, int curSpeed, int deltaSpeed, int Init, int Cd, int Protect);
-	void CreatePlayerFromServer(int uid, int directionX, int directionY, int finalX, int finalY, bool isStopped, int NMass);
-	/***********************client接口***********************/
-
-private:
+	//crc
+	int GetCrcCnt(unsigned int uid);
+	unsigned int GetCrcIdx(unsigned int uid, int idx);
 	
 public:
 	std::unordered_map<unsigned int, Spore*> mapSpores;//孢子	
@@ -165,21 +108,24 @@ public:
 	BBHitManager hitManager;
 	BBObjectManager objectManager;
 	BBPlayerManager playerManager;
-	BBFrameCacheManager frameCacheManager;
+	BBFrameOutManager frameOutManager;
+	BBFrameInManager frameInManager;
 	BBFoodSpikyManager foodSpikyManager;
 	BBSporeManager sporeManager;
 	BBRect spikyRect; //刺球生成的范围
 	BBRect mapRect;  //整个地图的范围
+
+	std::unordered_map<int, bool> needUpdatePlayers;
 private:
-	std::vector<int> eatResults;
-	int gameFrame;
+	int mGameFrame;
 	int currentGetServerKeyFrame;
 	bool isServer;
-	int timeMove;
-	int timeEat;
-	int timeHit;
-	int timeUpdateCircle;
-	int timeMovePlayer;
+	int userId;
+
+	bool canEatFoodSpiky;
+	bool canEatSpore;
+	bool canEatNode;
+	
 };
 
 #endif

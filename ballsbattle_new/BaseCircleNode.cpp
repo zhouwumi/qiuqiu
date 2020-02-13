@@ -1,17 +1,19 @@
 #include "BaseCircleNode.h"
+#include<math.h>
+#include "BBMathUtils.h"
 
 BaseCircleNode::BaseCircleNode() :
-	Idx(0),
-	_radius(0),
+	idx(0),
+	radius(0),
 	treeIndex(0)
 {
-	Location = BBPoint::ZERO;
+	location = BBVector::ZERO;
 	rect = BBRect::ZERO;
 }
 
-void BaseCircleNode::ChangePosition(int x, int y)
+void BaseCircleNode::ChangePosition(double x, double y)
 {
-	Location.x = x;
-	Location.y = y;
-	rect.setRect(x - _radius, y - _radius, x + _radius, y + _radius);
+	location.x = BBMathUtils::bb_fix_float(x);
+	location.y = BBMathUtils::bb_fix_float(y);
+	rect.setRect(location.x - radius, location.y - radius, location.x + radius, location.y + radius);
 }

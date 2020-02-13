@@ -35,7 +35,7 @@ public:
 	std::vector<GridNode> gridNodes;
 	std::unordered_map<BaseCircleNode*, int> mapAllObjects;
 	int sideSizeLen;
-	float sideLen;
+	double sideLen;
 private:
 	int depth;
 	int mapW;

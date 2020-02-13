@@ -21,7 +21,6 @@ public:
 
 	//food食物
 	void RemoveFoodByIdx(int idx);
-	void RemoveFoodByPos(int posKey);
 	void ClearAllFood();
 
 	void RemoveSpikyByIdx(int idx);
@@ -29,27 +28,22 @@ public:
 
 	void SpikyBeEat(int idx);
 
-	std::vector<int> ClientGenerateFood(int num);
-	std::vector<int> ClientGenerateSpiky(int num);
-
 	void SetGameManager(BBGameManager* manager)
 	{
 		gameManager = manager;
 	}
 
 	std::vector<int> GetAllFoodInfos();
-	int GetFoodIdxByPos(int pos);
-	int GetFoodPosByIdx(int idx);
 
 	SpikyBall* GetSpikyInfo(int idx);
 	std::vector<int> GetAllSpikyInfos();
-	void ClientAddNewFoodFromServer(int idx, int posKey);
+	void ClientAddNewFoodFromServer(int posKey);
 	void ClientAddNewSpikyFromServer(int idx, int posKey, int mass);
 
 	unsigned int GetAllFoodCrc();
 	unsigned int GetAllSpikyCrc();
 public:
-	std::unordered_map<unsigned int, Food*> mapFoodPos;//食物位置key
+	//std::unordered_map<unsigned int, Food*> mapFoodPos;//食物位置key
 	std::unordered_map<unsigned int, Food*> mapFoodIdxs;//食物idx key
 	std::unordered_map<unsigned int, SpikyBall*> mapSpikyBalls;//刺球
 

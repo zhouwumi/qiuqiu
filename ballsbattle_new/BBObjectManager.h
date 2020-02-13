@@ -2,10 +2,12 @@
 #define BB_OBJECT_MANAGER_CPP
 #include "BBObjects.h"
 #include "BBPlayerNode.h"
+#include "BBPlayer.h"
 #include "BBRect.h"
 #include "BBVector.h"
 #include "BBPoint.h"
 
+#define IDX_START_SPIKY 10000
 class BBGameManager;
 
 class BBObjectManager
@@ -21,24 +23,35 @@ public:
 	Food* CreateFood(int x, int y);
 	SpikyBall* CreateSpikyBall(int x, int y, int mass);
 	SpikyBall* CreateSpikyBall(int x, int y, int mass, int idx);
-	Player* CreatePlayer(int uid);
-	PlayerNode* CreatePlayerNode(int uid, int mass, int cd, const BBVector& Current, const BBVector& Delta, const BBVector& Final, const BBVector& Direction);
-	PlayerNode*  CreatePlayerNode(int uid, int mass);
-	PlayerNode*  CreatePlayerNode(int uid, int mass, int idx);
-	PlayerNode* CreateSimplePlayerNode();
 
-	Spore* CreateSpore(PlayerNode* sourceNode);
-	unsigned int GetNextObjIdx();
-	
+	Spore* CreateSpore(BBPlayerNode* sourceNode);
+	Spore* DebugCreateSpore();
+	inline unsigned int GetNextObjIdx()
+	{
+		return _curObjIdx++;
+	}
+	inline unsigned int GetNextPlayerIdx()
+	{
+		return _nextPlayerIdx++;
+	}
 
 	//同步服务器的下一个对象idx
 	void SetServerNextObjIndex(int nextIdx)
 	{
 		_curObjIdx = nextIdx;
 	}
+
+	//1 * 10000
+	inline unsigned int GetNextSpikyIdx()
+	{
+		return _nextSpikyIdx++ + IDX_START_SPIKY;
+	}
+
 private:
 	BBGameManager* gameManager;
 	unsigned int _curObjIdx;
+	unsigned int _nextPlayerIdx;
+	unsigned int _nextSpikyIdx;
 };
 
 #endif

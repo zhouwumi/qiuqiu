@@ -1,6 +1,7 @@
 #include "BBMathUtils.h"
 #include <random>
 #include "BBConst.h"
+#include "BBConfigManager.h"
 
 #if defined(_WIN32) && defined(_WINDOWS)
 	#include "cocos2d.h"
@@ -31,15 +32,17 @@ void BBSendLogToWindow(const char *log)
 
 #define MAX_LOG_LENGTH 16 * 1024
 
-float BBMathUtils::SIN_VALUE[] = {
+double BBMathUtils::SIN_VALUE[] = {
 	0, 0.0175, 0.0349, 0.0523, 0.0698, 0.0872, 0.1045, 0.1219, 0.1392, 0.1564, 
 	0.1736, 0.1908, 0.2079, 0.2250, 0.2419, 0.2588, 0.2756, 0.2924, 0.3090, 0.3256, 
 	0.3420, 0.3584, 0.3746, 0.3907, 0.4067, 0.4226, 0.4384, 0.4540, 0.4695, 0.4848, 0.5, 0.5150, 0.5299, 0.5446, 0.5592, 0.5736, 0.5878, 0.6018, 0.6157, 0.6293, 0.6428, 0.6561, 0.6691, 0.6820, 0.6947, 0.7071, 0.7193, 0.7314, 0.7431, 0.7547, 0.7660, 0.7771, 0.7880, 0.7986, 0.8090, 0.8192, 0.8290, 0.8387, 0.8480, 0.8572, 0.8660, 0.8746, 0.8829, 0.8910, 0.8988, 0.9063, 0.9135, 0.9205, 0.9272, 0.9336, 0.9397, 0.9455, 0.9511, 0.9563, 0.9613, 0.9659, 0.9703, 0.9744, 0.9781, 0.9816, 0.9848, 0.9877, 0.9903, 0.9925, 0.9945, 0.9962, 0.9976, 0.9986, 0.9994, 0.9998, 1, 0.9998, 0.9994, 0.9986, 0.9976, 0.9962, 0.9945, 0.9925, 0.9903, 0.9877, 0.9848, 0.9816, 0.9781, 0.9744, 0.9703, 0.9659, 0.9613, 0.9563, 0.9511, 0.9455, 0.9397, 0.9336, 0.9272, 0.9205, 0.9135, 0.9063, 0.8988, 0.8910, 0.8829, 0.8746, 0.8660, 0.8572, 0.8480, 0.8387, 0.8290, 0.8192, 0.8090, 0.7986, 0.7880, 0.7771, 0.7660, 0.7547, 0.7431, 0.7314, 0.7193, 0.7071, 0.6947, 0.6820, 0.6691, 0.6561, 0.6428, 0.6293, 0.6157, 0.6018, 0.5878, 0.5736, 0.5592, 0.5446, 0.5299, 0.5150, 0.5, 0.4848, 0.4695, 0.4540, 0.4384, 0.4226, 0.4067, 0.3907, 0.3746, 0.3584, 0.3420, 0.3256, 0.3090, 0.2924, 0.2756, 0.2588, 0.2419, 0.2250, 0.2079, 0.1908, 0.1736, 0.1564, 0.1392, 0.1219, 0.1045, 0.0872, 0.0698, 0.0523, 0.0349, 0.0175, 0, -0.0175, -0.0349, -0.0523, -0.0698, -0.0872, -0.1045, -0.1219, -0.1392, -0.1564, -0.1736, -0.1908, -0.2079, -0.2250, -0.2419, -0.2588, -0.2756, -0.2924, -0.3090, -0.3256, -0.3420, -0.3584, -0.3746, -0.3907, -0.4067, -0.4226, -0.4384, -0.4540, -0.4695, -0.4848, -0.5, -0.5150, -0.5299, -0.5446, -0.5592, -0.5736, -0.5878, -0.6018, -0.6157, -0.6293, -0.6428, -0.6561, -0.6691, -0.6820, -0.6947, -0.7071, -0.7193, -0.7314, -0.7431, -0.7547, -0.7660, -0.7771, -0.7880, -0.7986, -0.8090, -0.8192, -0.8290, -0.8387, -0.8480, -0.8572, -0.8660, -0.8746, -0.8829, -0.8910, -0.8988, -0.9063, -0.9135, -0.9205, -0.9272, -0.9336, -0.9397, -0.9455, -0.9511, -0.9563, -0.9613, -0.9659, -0.9703, -0.9744, -0.9781, -0.9816, -0.9848, -0.9877, -0.9903, -0.9925, -0.9945, -0.9962, -0.9976, -0.9986, -0.9994, -0.9998, -1, -0.9998, -0.9994, -0.9986, -0.9976, -0.9962, -0.9945, -0.9925, -0.9903, -0.9877, -0.9848, -0.9816, -0.9781, -0.9744, -0.9703, -0.9659, -0.9613, -0.9563, -0.9511, -0.9455, -0.9397, -0.9336, -0.9272, -0.9205, -0.9135, -0.9063, -0.8988, -0.8910, -0.8829, -0.8746, -0.8660, -0.8572, -0.8480, -0.8387, -0.8290, -0.8192, -0.8090, -0.7986, -0.7880, -0.7771, -0.7660, -0.7547, -0.7431, -0.7314, -0.7193, -0.7071, -0.6947, -0.6820, -0.6691, -0.6561, -0.6428, -0.6293, -0.6157, -0.6018, -0.5878, -0.5736, -0.5592, -0.5446, -0.5299, -0.5150, -0.5, -0.4848, -0.4695, -0.4540, -0.4384, -0.4226, -0.4067, -0.3907, -0.3746, -0.3584, -0.3420, -0.3256, -0.3090, -0.2924, -0.2756, -0.2588, -0.2419, -0.2250, -0.2079, -0.1908, -0.1736, -0.1564, -0.1392, -0.1219, -0.1045, -0.0872, -0.0698, -0.0523, -0.0349, -0.0175
 };
 
-float BBMathUtils::COS_VALUE[] = {
+double BBMathUtils::COS_VALUE[] = {
 	1,0.9998,0.9994,0.9986,0.9976,0.9962,0.9945,0.9925,0.9903,0.9877,0.9848,0.9816,0.9781,0.9744,0.9703,0.9659,0.9613,0.9563,0.9511,0.9455,0.9397,0.9336,0.9272,0.9205,0.9135,0.9063,0.8988,0.8910,0.8829,0.8746,0.8660,0.8572,0.8480,0.8387,0.8290,0.8192,0.8090,0.7986,0.7880,0.7771,0.7660,0.7547,0.7431,0.7314,0.7193,0.7071,0.6947,0.6820,0.6691,0.6561,0.6428,0.6293,0.6157,0.6018,0.5878,0.5736,0.5592,0.5446,0.5299,0.5150,0.5,0.4848,0.4695,0.4540,0.4384,0.4226,0.4067,0.3907,0.3746,0.3584,0.3420,0.3256,0.3090,0.2924,0.2756,0.2588,0.2419,0.2250,0.2079,0.1908,0.1736,0.1564,0.1392,0.1219,0.1045,0.0872,0.0698,0.0523,0.0349,0.0175,0,-0.0175,-0.0349,-0.0523,-0.0698,-0.0872,-0.1045,-0.1219,-0.1392,-0.1564,-0.1736,-0.1908,-0.2079,-0.2250,-0.2419,-0.2588,-0.2756,-0.2924,-0.3090,-0.3256,-0.3420,-0.3584,-0.3746,-0.3907,-0.4067,-0.4226,-0.4384,-0.4540,-0.4695,-0.4848,-0.5,-0.5150,-0.5299,-0.5446,-0.5592,-0.5736,-0.5878,-0.6018,-0.6157,-0.6293,-0.6428,-0.6561,-0.6691,-0.6820,-0.6947,-0.7071,-0.7193,-0.7314,-0.7431,-0.7547,-0.7660,-0.7771,-0.7880,-0.7986,-0.8090,-0.8192,-0.8290,-0.8387,-0.8480,-0.8572,-0.8660,-0.8746,-0.8829,-0.8910,-0.8988,-0.9063,-0.9135,-0.9205,-0.9272,-0.9336,-0.9397,-0.9455,-0.9511,-0.9563,-0.9613,-0.9659,-0.9703,-0.9744,-0.9781,-0.9816,-0.9848,-0.9877,-0.9903,-0.9925,-0.9945,-0.9962,-0.9976,-0.9986,-0.9994,-0.9998,-1,-0.9998,-0.9994,-0.9986,-0.9976,-0.9962,-0.9945,-0.9925,-0.9903,-0.9877,-0.9848,-0.9816,-0.9781,-0.9744,-0.9703,-0.9659,-0.9613,-0.9563,-0.9511,-0.9455,-0.9397,-0.9336,-0.9272,-0.9205,-0.9135,-0.9063,-0.8988,-0.8910,-0.8829,-0.8746,-0.8660,-0.8572,-0.8480,-0.8387,-0.8290,-0.8192,-0.8090,-0.7986,-0.7880,-0.7771,-0.7660,-0.7547,-0.7431,-0.7314,-0.7193,-0.7071,-0.6947,-0.6820,-0.6691,-0.6561,-0.6428,-0.6293,-0.6157,-0.6018,-0.5878,-0.5736,-0.5592,-0.5446,-0.5299,-0.5150,-0.5,-0.4848,-0.4695,-0.4540,-0.4384,-0.4226,-0.4067,-0.3907,-0.3746,-0.3584,-0.3420,-0.3256,-0.3090,-0.2924,-0.2756,-0.2588,-0.2419,-0.2250,-0.2079,-0.1908,-0.1736,-0.1564,-0.1392,-0.1219,-0.1045,-0.0872,-0.0698,-0.0523,-0.0349,-0.0175,0,0.0175,0.0349,0.0523,0.0698,0.0872,0.1045,0.1219,0.1392,0.1564,0.1736,0.1908,0.2079,0.2250,0.2419,0.2588,0.2756,0.2924,0.3090,0.3256,0.3420,0.3584,0.3746,0.3907,0.4067,0.4226,0.4384,0.4540,0.4695,0.4848,0.5,0.5150,0.5299,0.5446,0.5592,0.5736,0.5878,0.6018,0.6157,0.6293,0.6428,0.6561,0.6691,0.6820,0.6947,0.7071,0.7193,0.7314,0.7431,0.7547,0.7660,0.7771,0.7880,0.7986,0.8090,0.8192,0.8290,0.8387,0.8480,0.8572,0.8660,0.8746,0.8829,0.8910,0.8988,0.9063,0.9135,0.9205,0.9272,0.9336,0.9397,0.9455,0.9511,0.9563,0.9613,0.9659,0.9703,0.9744,0.9781,0.9816,0.9848,0.9877,0.9903,0.9925,0.9945,0.9962,0.9976,0.9986,0.9994,0.9998
 };
+
+BBRect BBMathUtils::defaultRect(0, 0, BBConst::MaxWidth, BBConst::MaxHeight);
 
 std::vector<std::string> BBMathUtils::serverLog;
 
@@ -86,8 +89,8 @@ void BBMathUtils::location_to_xy(int location, int& x, int& y)
 BBVector BBMathUtils::AngleToFixedVector(int angle, int length)
 {
 	int realAngle = angle % 360;
-	int x = int(roundf(COS_VALUE[realAngle] * length));
-	int y = int(roundf(SIN_VALUE[realAngle] * length));
+	double x = COS_VALUE[realAngle] * length;
+	double y = SIN_VALUE[realAngle] * length;
 	return BBVector(x, y);
 }
 
@@ -119,37 +122,37 @@ BBPoint BBMathUtils::GetRandomPoint(const BBRect& rect)
 
 bool BBMathUtils::CheckFoodGrip(BaseCircleNode& circle, BBPoint& point, int radius)
 {
-	int deltaX = circle.Location.x - point.x;
-	int deltaY = circle.Location.y - point.y;
+	int deltaX = circle.location.x - point.x;
+	int deltaY = circle.location.y - point.y;
 	int totalRadius = radius + circle.GetRadius();
 	return deltaX * deltaX + deltaY * deltaY < totalRadius * totalRadius;
 }
 
 bool BBMathUtils::CheckPlayerCollsion(BaseCircleNode& circle1, BaseCircleNode& circle2)
 {
-	int x = circle1.Location.x - circle2.Location.x;
-	int y = circle1.Location.y - circle2.Location.y;
+	int x = circle1.location.x - circle2.location.x;
+	int y = circle1.location.y - circle2.location.y;
 	int radius = circle1.GetRadius() + circle2.GetRadius();
 	return x * x + y * y < radius * radius;
 }
 
-bool BBMathUtils::NeedRollback(BaseCircleNode& circle1, BaseCircleNode& circle2, float delta)
+bool BBMathUtils::NeedRollback(BaseCircleNode* circle1, BaseCircleNode* circle2, double delta)
 {
-	return circle1.GetRadius() <= circle2.GetRadius() * (1 + delta) && circle2.GetRadius() <= circle1.GetRadius() * (1 + delta);
+	return circle1->GetRadius() <= circle2->GetRadius() * (1 + delta) && circle2->GetRadius() <= circle1->GetRadius() * (1 + delta);
 }
 
-bool BBMathUtils::CanEat(BaseCircleNode& circle1, BaseCircleNode& circle2, float delta)
+bool BBMathUtils::CanEat(BaseCircleNode& circle1, BaseCircleNode& circle2, double delta)
 {
 	if (circle1.GetRadius() < circle2.GetRadius() * (1 + delta))
 	{
 		return false;
 	}
-	int x = circle1.Location.x - circle2.Location.x;
-	int y = circle1.Location.y - circle2.Location.y;
+	int x = circle1.location.x - circle2.location.x;
+	int y = circle1.location.y - circle2.location.y;
 	return x * x + y * y < circle1.GetRadius() * circle1.GetRadius();
 }
 
-float BBMathUtils::PointToLineDistance(BBPoint& point, BBPoint& line1, BBPoint& line2)
+double BBMathUtils::PointToLineDistance(BBPoint& point, BBPoint& line1, BBPoint& line2)
 {
 	int a = line2.y - line1.y;
 	int b = line1.x - line2.x;
@@ -164,12 +167,12 @@ int BBMathUtils::Mass2Radius(int mass)
 
 int BBMathUtils::Mass2Speed(int mass)
 {
-	return int(floorf(8 * sqrtf(20.0f / (mass + 10))));
+	return int(floorf(8 * 1.6 * sqrtf(20.0 / (mass + 10))));
 }
 
 int BBMathUtils::PressureToPercent(int pressure)
 {
-	return pressure / 10.0f;
+	return pressure / 10.0;
 }
 
 int BBMathUtils::KillToExp(int kill, int fixed, int fixBase)
@@ -177,22 +180,21 @@ int BBMathUtils::KillToExp(int kill, int fixed, int fixBase)
 	return ceilf(10.0f * kill * fixed / fixBase);
 }
 
-float BBMathUtils::RoundDown(float num, int perc)
+double BBMathUtils::RoundDown(double num, int perc)
 {
 	int scale = pow(10, perc);
-	return floorf(num * scale) / scale;
+	return floor(num * scale) / scale;
 }
 
 BBRect BBMathUtils::GetVision(int baseW, int baseH, BBRect& bound)
 {
 	int width = bound.maxX - bound.minX;
 	int height = bound.maxY - bound.minY;
-	float length = sqrtf(width * width + height * height) / 2;
-	float buf = 1 / (0.003132 * length + 0.90604);
+	double length = sqrtf(width * width + height * height) / 2;
+	double buf = 1 / (0.003132 * length + 0.90604);
 	int widthX = ceilf(baseW / buf);
 	int heightY = ceilf(baseH / buf);
 	return BBRect(bound.centerX - widthX, bound.centerY - heightY, bound.centerX + widthX, bound.centerY + heightY);
-	
 }
 
 int BBMathUtils::GetRandom(int min, int max)
@@ -200,51 +202,54 @@ int BBMathUtils::GetRandom(int min, int max)
 	return min + rand() % (max - min + 1);
 }
 
-void BBMathUtils::FixCircle(const BBRect& rect, int circleX, int circleY, int radius, int& fixedX, int& fixedY, bool& isFixedX, bool& isFixedY)
+bool BBMathUtils::FixCircle(const BBRect& rect, double circleX, double circleY, int radius, double& fixedX, double& fixedY)
 {
-	
+	bool ret = false;
 	if (circleX + radius > rect.maxX)
 	{
-		isFixedX = true;
+		ret = true;
 		fixedX = rect.maxX - radius;
 	}
 	else if (circleX - radius < rect.minX) {
-		isFixedX = true;
+		ret = true;
 		fixedX = rect.minX + radius;
 	}
 	else {
-		isFixedX = false;
 		fixedX = circleX;
 	}
 
 	if (circleY + radius > rect.maxY)
 	{
-		isFixedY = true;
+		ret = true;
 		fixedY = rect.maxY - radius;
 	}
 	else if (circleY - radius < rect.minY) {
-		isFixedY = true;
+		ret = true;
 		fixedY = rect.minY + radius;
 	}
 	else {
-		isFixedY = false;
 		fixedY = circleY;
 	}
+	return ret;
+}
 
+bool BBMathUtils::FixCircleDefaultRect(double circleX, double circleY, int radius, double& fixedX, double& fixedY)
+{
+	return BBMathUtils::FixCircle(BBMathUtils::defaultRect, circleX, circleY, radius, fixedX, fixedY);
 }
 
 bool BBMathUtils::CheckCircleHit(BaseCircleNode& node1, BaseCircleNode& node2)
 {
-	int deltaX = node1.Location.x - node2.Location.x;
-	int deltaY = node1.Location.y - node2.Location.y;
+	int deltaX = node1.location.x - node2.location.x;
+	int deltaY = node1.location.y - node2.location.y;
 	int radius = node1.GetRadius() + node2.GetRadius();
 	return pow(deltaX, 2) + pow(deltaY, 2) < pow(radius, 2);
 }
 
 bool BBMathUtils::CheckCircleHit(BaseCircleNode& node1, int circleX, int circleY, int radius)
 {
-	int deltaX = node1.Location.x - circleX;
-	int deltaY = node1.Location.y - circleY;
+	int deltaX = node1.location.x - circleX;
+	int deltaY = node1.location.y - circleY;
 	int totalRadius = node1.GetRadius() + radius;
 	return pow(deltaX, 2) + pow(deltaY, 2) < pow(totalRadius, 2);
 }
@@ -253,74 +258,99 @@ int BBMathUtils::abs_int(int x) {
     return static_cast<int>(abs(static_cast<double>(x)));
 }
 
+double BBMathUtils::bb_fix_float(double value)
+{
+	return floor(value * 1000) / 1000.0;
+}
+
+void BBMathUtils::bb_fix_bb_vector(BBVector& vec)
+{
+	vec.x = BBMathUtils::bb_fix_float(vec.x);
+	vec.y = BBMathUtils::bb_fix_float(vec.y);
+}
+
+int BBMathUtils::bb_float_to_int(double value)
+{
+	return floorf(value * 1000);
+}
+
+
+double BBMathUtils::bb_int_to_float(int value)
+{
+	return value / 1000.0;
+}
+
 void BBMathUtils::BBLOG(const char *format, ...)
 {
-#if 1
-	int bufferSize = MAX_LOG_LENGTH;
-	char* buf = nullptr;
-	int nret = 0;
-	va_list args;
-	do
+	if (BBConfigManager::isOpenLog)
 	{
-		buf = new (std::nothrow) char[bufferSize];
-		if (buf == nullptr)
-			return;
-		va_start(args, format);
-		nret = vsnprintf(buf, bufferSize - 3, format, args);
-		va_end(args);
+#if 1
+		int bufferSize = MAX_LOG_LENGTH;
+		char* buf = nullptr;
+		int nret = 0;
+		va_list args;
+		do
+		{
+			buf = new (std::nothrow) char[bufferSize];
+			if (buf == nullptr)
+				return;
+			va_start(args, format);
+			nret = vsnprintf(buf, bufferSize - 3, format, args);
+			va_end(args);
 
-		if (nret >= 0)
-		{ // VS2015/2017
-			if (nret <= bufferSize - 3)
-			{// success, so don't need to realloc
-				break;
+			if (nret >= 0)
+			{ // VS2015/2017
+				if (nret <= bufferSize - 3)
+				{// success, so don't need to realloc
+					break;
+				}
+				else
+				{
+					bufferSize = nret + 3;
+					delete[] buf;
+				}
 			}
-			else
-			{
-				bufferSize = nret + 3;
+			else // < 0
+			{	// VS2013 or Unix-like System(GCC)
+				bufferSize *= 2;
 				delete[] buf;
 			}
-		}
-		else // < 0
-		{	// VS2013 or Unix-like System(GCC)
-			bufferSize *= 2;
-			delete[] buf;
-		}
-	} while (true);
-	buf[nret] = '\n';
-	buf[++nret] = '\0';
+		} while (true);
+		buf[nret] = '\n';
+		buf[++nret] = '\0';
 
 #if defined(_WIN32) && defined(_WINDOWS)
-	int pos = 0;
-	int len = nret;
-	char tempBuf[MAX_LOG_LENGTH + 1] = { 0 };
-	WCHAR wszBuf[MAX_LOG_LENGTH + 1] = { 0 };
-	do
-	{
-		int dataSize = std::min(MAX_LOG_LENGTH, len - pos);
-		std::copy(buf + pos, buf + pos + dataSize, tempBuf);
+		int pos = 0;
+		int len = nret;
+		char tempBuf[MAX_LOG_LENGTH + 1] = { 0 };
+		WCHAR wszBuf[MAX_LOG_LENGTH + 1] = { 0 };
+		do
+		{
+			int dataSize = std::min(MAX_LOG_LENGTH, len - pos);
+			std::copy(buf + pos, buf + pos + dataSize, tempBuf);
 
-		tempBuf[dataSize] = 0;
+			tempBuf[dataSize] = 0;
 
-		MultiByteToWideChar(CP_UTF8, 0, tempBuf, -1, wszBuf, sizeof(wszBuf));
-		OutputDebugStringW(wszBuf);
-		WideCharToMultiByte(CP_ACP, 0, wszBuf, -1, tempBuf, sizeof(tempBuf), nullptr, FALSE);
-		printf("%s", tempBuf);
+			MultiByteToWideChar(CP_UTF8, 0, tempBuf, -1, wszBuf, sizeof(wszBuf));
+			OutputDebugStringW(wszBuf);
+			WideCharToMultiByte(CP_ACP, 0, wszBuf, -1, tempBuf, sizeof(tempBuf), nullptr, FALSE);
+			printf("%s", tempBuf);
 
-		pos += dataSize;
+			pos += dataSize;
 
-	} while (pos < len);
-	BBSendLogToWindow(buf);
-	fflush(stdout);
+		} while (pos < len);
+		BBSendLogToWindow(buf);
+		fflush(stdout);
 #else
-	serverLog.emplace_back(buf);
-	// Linux, Mac, iOS, etc
-	/*fprintf(stdout, "%s", buf);
-	fflush(stdout);*/
+		serverLog.emplace_back(buf);
+		// Linux, Mac, iOS, etc
+		/*fprintf(stdout, "%s", buf);
+		fflush(stdout);*/
 #endif
 
-	delete[] buf;
+		delete[] buf;
 #endif // 0
+	}
 }
 
 void BBMathUtils::ClearLog()

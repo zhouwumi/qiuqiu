@@ -1,8 +1,8 @@
 #include "CommandList.h"
 
 enum CommandContants {
-	MaxCommandQueueSize = 30,
-	MaxCommandCount = 30,
+	MaxCommandQueueSize = 15,
+	MaxCommandCount = 15,
 };
 
 CommandList::CommandList():
