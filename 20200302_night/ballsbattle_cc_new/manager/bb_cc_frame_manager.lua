@@ -98,9 +98,7 @@ function BBCCFrameManager:OnUpdate()
             self.gameManager:UpdatePlayer(playerId)
             self.playerUpdateFrames[playerId] = self._mainPanel.frame
             local player = self.playerManager:GetPlayer(playerId)
-            -- if playerId ~= g_user_info.get_user_info().uid then
-                player:AddNewFrame()
-            -- end
+            player:AddNewFrame()
         end
         local time3 = utils_get_tick()
         local updateTime = time3 - time2

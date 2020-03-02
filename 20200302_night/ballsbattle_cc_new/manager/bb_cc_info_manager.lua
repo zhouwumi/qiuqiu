@@ -129,7 +129,7 @@ function BBCCInfoManager:NewSpores(sporeInfos)
         if uid == g_user_info.get_user_info().uid then
             local fromNode = self.playerManager:GetPlayerNodeObject(fromId)
             if fromNode then
-                local x, y= fromNode:GetDisplayPosition()
+                local x, y = fromNode:GetDisplayPosition()
                 self.gameManager:SetRealClientRenderXY(fromId, x, y)
             end
         end

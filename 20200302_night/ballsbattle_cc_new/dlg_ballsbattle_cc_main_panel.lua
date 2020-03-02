@@ -40,32 +40,31 @@ function Panel:init_panel()
     -- local delay_time = {30, 60, 100, 200, 300, 600}
     -- local delay_time = {0}
     -- self.lastIdx = 1
-    if constant_ballsbattle_cc.IsMeNetShake and false then
-        -- local delay_time = {30, 60, 100, 200, 300, 600}
-        local delay_time = {60, 100, 200, 300}
+    if constant_ballsbattle_cc.IsMeNetShake then
+        local delay_time = {30, 60, 100, 200, 300, 600}
         self:get_layer():DelayCall(20, function()
             -- self.lastIdx = self.lastIdx % 2 + 1
             local next_idx = math.ceil(math.random() * #delay_time)
             local time = delay_time[next_idx]
-            -- constant_ballsbattle_cc.SimulateDelay = time
-            -- message("网速切换了....   "..time)
+            constant_ballsbattle_cc.SimulateDelay = time
+            message("网速切换了....   "..time)
             return 20
         end)
     end
 
     if constant_ballsbattle_cc.IsMeNetShake then
-        -- local delay_time = {30, 60, 100, 200, 300, 600}
-        -- local delay_time = {60, 100, 200, 300}
-        -- self:get_layer():DelayCall(10, function()
-        --     -- self.lastIdx = self.lastIdx % 2 + 1
-        --     local next_idx = math.ceil(math.random() * #delay_time)
-        --     local time = delay_time[next_idx]
-        --     constant_ballsbattle_cc.RobotDelay = time
-        --     message("机器人的网速切换了....   "..time)
-        --     return 20
-        -- end)
+        local delay_time = {30, 60, 100, 200, 300, 600}
+        self:get_layer():DelayCall(10, function()
+            -- self.lastIdx = self.lastIdx % 2 + 1
+            local next_idx = math.ceil(math.random() * #delay_time)
+            local time = delay_time[next_idx]
+            constant_ballsbattle_cc.RobotDelay = time
+            message("机器人的网速切换了....   "..time)
+            return 20
+        end)
     end
     self.frame = 0
+    self.renderFrame = 0
 end
 
 function Panel:_initUI()
@@ -180,23 +179,19 @@ function Panel:RunLoop()
     end
 
     self.frame = 0
+    self.renderFrame = 0
     self.foceUpdate = false
-    local lastTime = utils_get_tick()
+    local lastKeyFrameTime = utils_get_tick()
+    local lastRenderTime = utils_get_tick()
     self._delayCall = delay_call(0, function()
+        self.renderFrame = self.renderFrame + 1
         local nowTime = utils_get_tick()
-        local times = math.floor((nowTime - lastTime) / (1 / 30))
-        -- if times <= 0 then
-        --     return 1 / 60
-        -- end
-        print("start client update", nowTime - lastTime)
-        -- local cache = {}
-        -- for id, node in pairs(self.playerManager.allPlayerNodes) do
-        --     local x, y = node:GetDisplayPosition()
-        --     cache[id] = {x, y}
-        -- end
-
+        self.framePassTime = nowTime - lastRenderTime
+        local times = math.floor((nowTime - lastKeyFrameTime) / constant_ballsbattle_cc.RenderFPS)
+        print("start client update", nowTime - lastKeyFrameTime, nowTime - lastRenderTime)
+        lastRenderTime = nowTime
         if times > 0 then
-            lastTime = lastTime + times * (1 / 30)
+            lastKeyFrameTime = lastKeyFrameTime + times * constant_ballsbattle_cc.RenderFPS
             for index = 1, times do
                 print("runtimes ", index, times)
                 self.frame = self.frame + 1
@@ -206,34 +201,10 @@ function Panel:RunLoop()
             print("end client update")
         end
         
-        -- -- self.playerManager:Update(self.frameManager.updatePlayerIds)
-        -- for _, playerId in ipairs(self.frameManager.updatePlayerIds or {}) do
-        --     if playerId ~= g_user_info.get_user_info().uid then
-        --         local player = self.playerManager:GetPlayer(playerId)
-        --         player:Update()
-        --     end
-        --     -- local playerObject = self.allPlayers[playerId]
-        --     -- count = count + playerObject:Update()
-        --     -- cache[playerId] = true
-        -- end
-        -- for id, node in pairs(self.playerManager.allPlayerNodes) do
-        --     if cache[id] then
-        --         local oldX, oldY = cache[id][1], cache[id][2]
-        --         local x, y = node:GetDisplayPosition()
-        --         print("total move   ", x - oldX, y - oldY)
-        --     end
-        -- end
         self.playerManager:Update(self.frameManager.updatePlayerIds)
         self.bgComponent:Update()
         self.directorComponent:OnUpdate()
-        -- self.pingComponent:OnUpdate()
-
-        -- local myPlayerObject = self.playerManager:GetMyPlayerObject()
-        -- if myPlayerObject then
-        --     local startx, starty, endx ,endy = myPlayerObject:GetRectCenter()
-        --     self.labelPosition:SetString(math.floor((startx + endx) / 2).." : "..math.floor((starty + endy) / 2))
-        -- end
-        return 1 / 60
+        return 1 / 30
     end)
 end
 

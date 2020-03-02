@@ -43,17 +43,13 @@ function PlayerNodeObject:Update(isJump)
 	if not self._hasInsertFrame then
 		return
 	end
+	-- print("--------update node ---", self.objectIdx)
 	self:_updatePosition(isJump)
 end
 
 function PlayerNodeObject:_updatePosition(isFirst)
 	if not self.isMe then
-		if constant_ballsbattle_cc.IsNodeCatchUp then
-			self:_updateOtherPositionVersion2(isFirst)
-			-- self:_updateOtherPosition(isFirst)
-		else
-			self:_updateOtherPosition(isFirst)
-		end
+		self:_updateOtherPositionVersion2(isFirst)
 
 		local minLocalPoint, maxLocalPoint = self._mainPanel.bgComponent:GetVisibleRect()
 		local x, y = self.displayObject:GetPosition()
@@ -124,18 +120,20 @@ function PlayerNodeObject:_simulateEatSpore()
 end
 
 function PlayerNodeObject:AddNewFrame()
-	self._hasInsertFrame = true
-	if not self.isMe then
-		self.lastUpdateTime = utils_get_tick() - 1 / 30
+	local isFirstInsert = false
+	if not self._hasInsertFrame then
+		isFirstInsert = true
 	end
+	self._hasInsertFrame = true
 	local renderX, renderY = self._mainPanel.gameManager:GetPlayerNodeRenderPos(self.objectIdx)
 	renderX = renderX / 1000
 	renderY = renderY / 1000
 	table.insert(self.renderXYCache, {(self.lastFrameX + renderX) / 2, (self.lastFrameY + renderY) / 2})
 	table.insert(self.renderXYCache, {renderX, renderY})
 	
-	
-	print("add new frame  ", renderX, renderY)
+	if not self.isMe then
+		-- print("add new frame  ", renderX, renderY, #self.renderXYCache, self.objectIdx)
+	end
 	self.lastFrameX = renderX
 	self.lastFrameY = renderY
 	self.lastKeyFrameTime = utils_get_tick()
@@ -177,45 +175,24 @@ function PlayerNodeObject:_updateOtherPositionVersion2(isFirst)
 		self.displayObject:SetPosition(renderX, renderY)
 		self.lastFrameX = renderX
 		self.lastFrameY = renderY
-		self.lastUpdateTime = utils_get_tick()
+		self._hasInsertFrame = false
+		self.currentCathFrame = 0
+		self.renderXYCache = {}
+		self.isNew = true
 	else
-		-- if self._mainPanel.frameManager.isKeyFrame then
-		-- 	table.insert(self.renderXYCache, {(self.lastFrameX + renderX) / 2, (self.lastFrameY + renderY) / 2})
-		-- 	table.insert(self.renderXYCache, {renderX, renderY})
-		-- 	self.lastFrameX = renderX
-		-- 	self.lastFrameY = renderY
-
-		-- 	local deltaX = (self.lastFrameX + renderX) / 2 - lastX
-		-- 	local deltaY = (self.lastFrameY + renderY) / 2 - lastY
-		-- 	-- print("计算距离 ", self._mainPanel.frame, deltaX * deltaX + deltaY * deltaY)
-		-- 	if deltaX * deltaX + deltaY * deltaY > 100 * 100 then
-		-- 		for index = 1, #self.renderXYCache - 2 do
-		-- 			table.remove(self.renderXYCache, 1)
-		-- 		end
-		-- 		local firstPoint = self.renderXYCache[1]
-		-- 		self.displayObject:SetPosition(firstPoint[1], firstPoint[2])
-		-- 		table.remove(self.renderXYCache, 1)
-		-- 		self:_updateBluePosition()
-		-- 		self.currentCathFrame = 0
-		-- 		self.catchOffsetX = 0
-		-- 		self.catchOffsetY = 0
-		-- 		self.lastUpdateTime = utils_get_tick()
-		-- 		-- print("直接拉扯位置 ")
-		-- 		return
-		-- 	end
-		-- end
-		-- if #self.renderXYCache <= 0 then
-		-- 	self.lastUpdateTime = utils_get_tick()
-		-- 	return
-		-- end
-		local newTime = utils_get_tick()
-		local costTimes = (newTime - self.lastUpdateTime) / (1 / 30)
-		local oldUpdateTime = self.lastUpdateTime
-		local oldTime = newTime - self.lastUpdateTime
+		local passTime = self._mainPanel.framePassTime
+		if self.isNew then
+			passTime = 0
+		end
+		local costTime = passTime / constant_ballsbattle_cc.RenderFPS
 		local x, y = self.displayObject:GetPosition()
-		self:_tryCostOtherPosition(costTimes)
+		-- print("pass time:  ", passTime)
+		-- print("pass frame: ", costTime)
+		self:_tryCostOtherPosition(costTime)
 		local newX, newY = self.displayObject:GetPosition()
-		print("move info ", self.objectIdx, self._mainPanel.frame, oldTime, newX - x, newY - y, (newX - x) / (newY - y), newTime, oldUpdateTime)
+		-- print("move delta:  ", newX - x, newY - y, (newX - x) / (newY - y))
+		-- print("move info ", self.objectIdx, self._mainPanel.frame)
+		self.isNew = false
 	end
 	self:_updateBluePosition()
 end
@@ -223,34 +200,28 @@ end
 function PlayerNodeObject:_tryCostOtherPosition(costTime)
 	local lastX, lastY = self.displayObject:GetPosition()
 	if #self.renderXYCache <= 0 then
-		__G__TRACKBACK__("dddd")
-		-- print("no renderXYCache")
+		-- __G__TRACKBACK__("dddd")
 		-- message("没有目标位置")
-		print("move1  ", self.catchOffsetX * costTime, self.catchOffsetY * costTime, costTime)
-		self.displayObject:SetPosition(lastX + self.catchOffsetX * costTime, lastY + self.catchOffsetY * costTime)
-		self.lastUpdateTime = self.lastUpdateTime + costTime * 1 / 30
+		-- print("move1  ", self.catchOffsetX * costTime, self.catchOffsetY * costTime, costTime)
+		-- self.displayObject:SetPosition(lastX + self.catchOffsetX * costTime, lastY + self.catchOffsetY * costTime)
 		return
 	end
 	-- print("renderXYCache  ", #self.renderXYCache)
 	
 	if self.currentCathFrame == nil or self.currentCathFrame <= 0 then
 		local playerDelay = self._mainPanel.gameManager:GetOtherPlayerDelay(self.uid) - 1
-		if not self.isMe then
-			-- self.displayObject.labelDelay:setVisible(true)
-			-- self.displayObject.labelDelay:SetString(tostring(playerDelay + 1))
-		end
 		-- playerDelay = math.min(playerDelay, 4)
 		-- playerDelay = math.max(playerDelay, 1)
 		-- print("当前帧信息  ", self._mainPanel.frame, playerDelay, #self.renderXYCache)
-		if self.initStopFrame > 0 or playerDelay <= 2 then --正常消耗
-			print("正常消耗-----------")
-			if #self.renderXYCache > 2 then
+		if self.initStopFrame > 0 or playerDelay <= 2 then --0正常消耗
+			if #self.renderXYCache > 5 then
 				self.currentCathFrame = #self.renderXYCache - 1
 				self.targetFrame = #self.renderXYCache
 			else
 				self.currentCathFrame = 1
 				self.targetFrame = 1
 			end
+			-- print("正常消耗-----------", self.currentCathFrame)
 		else --需要快速消耗
 			if #self.renderXYCache > playerDelay * 2 then
 				self.currentCathFrame = #self.renderXYCache - 1
@@ -265,46 +236,26 @@ function PlayerNodeObject:_tryCostOtherPosition(costTime)
 		local next_pos = self.renderXYCache[self.targetFrame]
 		self.catchOffsetX = (next_pos[1] - lastX) / self.currentCathFrame
 		self.catchOffsetY = (next_pos[2] - lastY) / self.currentCathFrame
-		print('calc offsetXY  ', self.catchOffsetX, self.catchOffsetY, self.currentCathFrame, next_pos[1], lastX, next_pos[2], lastY)
+		-- print('calc offsetXY  ', self.catchOffsetX, self.catchOffsetY, self.currentCathFrame, self.targetFrame, next_pos[1], lastX, next_pos[2], lastY)
 	end
 	if self.currentCathFrame and self.currentCathFrame > 0 then
 		local moveTime = math.min(costTime, self.currentCathFrame)
 		costTime = costTime - moveTime
 		self.currentCathFrame = self.currentCathFrame - moveTime
 		self.displayObject:SetPosition(lastX + self.catchOffsetX * moveTime, lastY + self.catchOffsetY * moveTime)
-		print("move2  ", self.catchOffsetX * moveTime, self.catchOffsetY * moveTime, costTime, moveTime, self.currentCathFrame, self.catchOffsetX, self.catchOffsetY)
+		-- print("current state:  ",self.currentCathFrame, self.catchOffsetX, self.catchOffsetY)
+		-- print("move step delta:  ", self.catchOffsetX * moveTime, self.catchOffsetY * moveTime, moveTime)
 		local x, y = self.displayObject:GetPosition()
 		if self.currentCathFrame <= 0 then
 			for index = 1, self.targetFrame do
 				table.remove(self.renderXYCache, 1)
 			end
+			-- print("remove frame ", self.targetFrame, #self.renderXYCache)
 		end
-		self.lastUpdateTime = self.lastUpdateTime + moveTime * 1 / 30
 		if costTime > 0 then
 			self:_tryCostOtherPosition(costTime)
 		end
 	end
-end
-
-function PlayerNodeObject:_updateOtherPosition(isFirst)
-	self:_updateBaseInfo()
-	local renderX, renderY = self._mainPanel.gameManager:GetPlayerNodeRenderPos(self.objectIdx)
-	renderX = renderX / 1000
-	renderY = renderY / 1000
-	
-	local lastX, lastY = self.displayObject:GetPosition()
-	if isFirst then
-		self.displayObject:SetPosition(renderX, renderY)
-	elseif self._mainPanel.frameManager.isKeyFrame then
-		self.displayObject:SetPosition((renderX + lastX) / 2, (renderY + lastY) / 2)
-	else
-		self.displayObject:SetPosition(renderX, renderY)
-	end
-	local x, y = self.displayObject:GetPosition()
-	if not self.isMe then
-		-- print("_updateOtherPosition ", self.idx, self._mainPanel.frame, x, y)
-	end
-	self:_updateBluePosition()
 end
 
 function PlayerNodeObject:_updateMePosition(isFirst)
@@ -319,25 +270,13 @@ function PlayerNodeObject:_updateMePosition(isFirst)
 		self.displayObject:SetPosition(renderX, renderY)
 		self.lastFrameX = renderX
 		self.lastFrameY = renderY
-		self.lastUpdateTime = utils_get_tick()
 	else
-		-- if self._mainPanel.frameManager.isKeyFrame then
-		-- 	table.insert(self.renderXYCache, {(self.lastFrameX + renderX) / 2, (self.lastFrameY + renderY) / 2})
-		-- 	table.insert(self.renderXYCache, {renderX, renderY})
-		-- 	self.lastFrameX = renderX
-		-- 	self.lastFrameY = renderY
-		-- 	-- self.lastUpdateTime = utils_get_tick()
-		-- end
-		local newTime = utils_get_tick()
-		local costTime = (newTime - self.lastUpdateTime) / (1 / 30)
+		local costTime = self._mainPanel.framePassTime / (1 / 30)
 		self:_tryCostMePosition(costTime)
-		self.lastUpdateTime = newTime
 	end
 
-	if self.isMe then
-		self:_updateArrow(self.speedX, self.speedY)
-		self:_updateMotion()
-	end
+	self:_updateArrow(self.speedX, self.speedY)
+	self:_updateMotion()
 	self:_updateBluePosition()
 end
 
@@ -383,7 +322,6 @@ function PlayerNodeObject:_tryCostMePosition(costTime)
 				table.remove(self.renderXYCache, 1)
 			end
 		end
-		self.lastUpdateTime = self.lastUpdateTime + moveTime * 1 / 30
 		if costTime > 0 then
 			self:_tryCostMePosition(costTime)
 		end
@@ -495,6 +433,7 @@ function PlayerNodeObject:ResetData()
 	self.catchOffsetX = 0
 	self.catchOffsetY = 0
 	self._hasInsertFrame = false
+	self.isNew = true
 end
 
 function PlayerNodeObject:Remove()

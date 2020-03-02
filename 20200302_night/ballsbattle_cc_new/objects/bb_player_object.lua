@@ -29,7 +29,7 @@ end
 function PlayerObject:OnJoinGame(uid)
 	self.isNewBirth = true
 	self.uid = uid
-    self.lastFrame = self._mainPanel.frame or 0
+    self.lastFrame = self._mainPanel.renderFrame or 0
 	delay_call(0, function()
 		self.isNewBirth = false
 	end)
@@ -51,23 +51,23 @@ end
 
 function PlayerObject:Update()
     local count = 0
-    -- local isJump = self._mainPanel.frame - self.lastFrame > 1
+    local isJump = self._mainPanel.renderFrame - self.lastFrame > 1
     local mass = 0
 	for _, playerNode in pairs(self.allPlayerNodes) do
-		playerNode:Update()
+		playerNode:Update(isJump)
         mass = playerNode.mass
         if playerNode.displayObject:isVisible() then
             count = count + 1
         end
 	end
-    self.lastFrame = self._mainPanel.frame
+    self.lastFrame = self._mainPanel.renderFrame
     self.mass = mass
     return count
 end
 
 function PlayerObject:Hide()
     for _, playerNode in pairs(self.allPlayerNodes) do
-        playerNode:Update()
+        -- playerNode:Update()
         playerNode.displayObject:setVisible(false)
     end
 end

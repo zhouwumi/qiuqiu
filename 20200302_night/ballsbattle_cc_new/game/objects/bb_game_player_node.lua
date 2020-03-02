@@ -23,14 +23,13 @@ function BBGamePlayerNodeObject:ChangeCd(delta)
 	self.cd = math.floor(cd / 5) * 5
 end
 
-function BBGameMoveBallObject:ChangeRenderPosition(newX, newY)
+function BBGamePlayerNodeObject:ChangeRenderPosition(newX, newY)
 	newX = BBGameMathUtils.bb_fix_float(newX)
 	newY = BBGameMathUtils.bb_fix_float(newY)
 	self.mDeltaData.location.x = newX
 	self.mDeltaData.location.y = newY
-	self.realX = realX
-	self.realY = realY
-	-- print("ChangeRenderPosition  ", newX, newY)
+	self.realX = newX
+	self.realY = newY
 end
 
 
@@ -77,10 +76,7 @@ function BBGamePlayerNodeObject:Move(gameManager)
 	locVecY = fixedY
 	-- print("fixCirlce  ", locVecX, locVecY, self:GetRadius())
 	if self.initStopFrame == 0 and #self.player.vecPlayerNodes > 1 then
-		-- local time1 = utils_get_tick()
 		local isHit, newX, newY = self:_handleNodeHit(locVecX, locVecY)
-		-- local time2 = utils_get_tick()
-		-- self.player._mainPanel.frameManager:CacheHitTime(time2 - time1)
 		locVecX = newX
 		locVecY = newY
 		if isHit then

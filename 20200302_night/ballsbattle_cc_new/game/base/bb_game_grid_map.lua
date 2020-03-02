@@ -35,7 +35,6 @@ function GridMap:SetMap(w, h, depth)
 	end
 	self.sideLen = sideLen
 	self.sideSizeLen = sideSizeLen
-	print("GridMap ", depth, self.sideLen, self.sideSizeLen)
 end
 
 --node:BBGameBaseObject

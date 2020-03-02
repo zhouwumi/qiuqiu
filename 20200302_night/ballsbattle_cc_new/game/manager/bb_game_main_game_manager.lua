@@ -390,10 +390,12 @@ end
 function BBGameMainGameManager:SetRealClientRenderXY(nodeIdx, x, y)
 	local node = self:GetPlayerNode(nodeIdx)
 	if not node then
-		return node
+		print("SetRealClientRenderXY not find node ", nodeIdx)
+		return
 	end
 	node.realX = x
 	node.realY = y
+	print("SetRealClientRenderXY  ", x, y)
 	-- if node.mass < constant_ballsbattle_cc.BBConfigManager.initBallMass then
 	-- 	node:SetBallMass(constant_ballsbattle_cc.BBConfigManager.initBallMass)
 	-- end
