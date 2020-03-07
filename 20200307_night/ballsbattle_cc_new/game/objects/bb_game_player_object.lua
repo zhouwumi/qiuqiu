@@ -7,6 +7,8 @@ local BBGameSimplePrediction = import('logic.dialog.ballsbattle_cc_new.game.data
 local BBGameRect = import('logic.dialog.ballsbattle_cc_new.game.base.bb_game_rect').BBGameRect
 local constant_ballsbattle_cc = g_conf_mgr.get_constant('constant_ballsbattle_cc')
 
+local local_bb_int_to_float = BBGameMathUtils.bb_int_to_float
+
 BBGamePlayerObject = CreateClass()
 
 function BBGamePlayerObject:__init__()
@@ -25,6 +27,8 @@ function BBGamePlayerObject:__init__()
 	self.predictionData = BBGamePredictionData:New()
 	self.predictionCommand = BBGameMoveCommand:New()
 	self._mainPanel = g_panel_mgr.get_panel('ballsbattle_cc_new.dlg_ballsbattle_cc_main_panel')
+	self.groupRect = BBGameRect:New()
+	self._is_node_dirty = true
 end
 
 function BBGamePlayerObject:GetCrc()
@@ -73,10 +77,19 @@ function BBGamePlayerObject:GetFinalPointY()
 end
 
 function BBGamePlayerObject:GetGroupRect()
-	local ret = BBGameRect:New()
-	if #self.vecPlayerNodes == 0 then
-		return ret
+	if self._is_node_dirty then
+		self:CalcGroupRect()
+		self._is_node_dirty = false
 	end
+	return self.groupRect
+end
+
+function BBGamePlayerObject:CalcGroupRect()
+	if #self.vecPlayerNodes == 0 then
+		self.groupRect:SetZero()
+		return
+	end
+	local ret = self.groupRect
 	local node1 = self.vecPlayerNodes[1]
 	ret:Copy(node1.rect)
 	for i = 2, #self.vecPlayerNodes do
@@ -96,7 +109,6 @@ function BBGamePlayerObject:GetGroupRect()
 		end
 	end
 	ret:UpdateCenter()
-	return ret
 end
 
 function BBGamePlayerObject:AddPlayerNode(node)
@@ -108,6 +120,17 @@ function BBGamePlayerObject:AddPlayerNode(node)
 	if self.Stopped and #self.vecPlayerNodes == 1 then
 		local node1 = self.vecPlayerNodes[1]
 		self:UpdateFinalPoint(node1.location.x, node1.location.y)
+	end
+	self._is_node_dirty = true
+end
+
+function BBGamePlayerObject:RemovePlayerNode(node)
+	for i, playerNode in ipairs(self.vecPlayerNodes or {}) do
+		if playerNode == node then
+			self._is_node_dirty = true
+			table.remove(self.vecPlayerNodes, i)
+			return
+		end
 	end
 end
 
@@ -377,14 +400,15 @@ function BBGamePlayerObject:processTick(command)
 	if self:IsMe() then
 		self.gameManager.moveManager:SetCheckSum(crc)
 	end
+	self._is_node_dirty = true
 	return crc;
 end
 
 function BBGamePlayerObject:ClientSyncServerPlayerInfo(nMass, directionX, directionY, ackCommand, finalPointX, finalPointY, Stopped)
 	self.NMass = nMass;
 	self.Stopped = Stopped;
-	self.FinalPoint.x = BBGameMathUtils.bb_int_to_float(finalPointX)
-	self.FinalPoint.y = BBGameMathUtils.bb_int_to_float(finalPointY)
+	self.FinalPoint.x = local_bb_int_to_float(finalPointX)
+	self.FinalPoint.y = local_bb_int_to_float(finalPointY)
 	if not self:IsMe() then
 		-- //同步完了状态就没必要保存预测的数据
 		self.direction.x = directionX;

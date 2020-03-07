@@ -6,17 +6,18 @@ local BBGamePlayerObject = import('logic.dialog.ballsbattle_cc_new.game.objects.
 local BBGamePlayerNodeObject = import('logic.dialog.ballsbattle_cc_new.game.objects.bb_game_player_node').BBGamePlayerNodeObject
 local constant_ballsbattle_cc = g_conf_mgr.get_constant('constant_ballsbattle_cc')
 
+local local_bb_int_to_float = BBGameMathUtils.bb_int_to_float
 function BBGamePlayerManager:__init__(gameManager)
 	self.gameManager = gameManager
 	self.mapPlayerNodes = {}
-	self.playerIds = {}
+	-- self.playerIds = {}
 	self.mapPlayers = {}
 end
 
 function BBGamePlayerManager:OnNewPlayerNodeGenerate(player, playerNode)
 	player:AddPlayerNode(playerNode);
 	self.mapPlayerNodes[playerNode.idx] = playerNode
-	self.gameManager.NodeTree:AddCircleNode(playerNode);
+	-- self.gameManager.NodeTree:AddCircleNode(playerNode);
 end
 
 function BBGamePlayerManager:CreatePlayerFromServer(uid, directionX, directionY, NMass, finalPointX, finalPointY, Stopped)
@@ -26,17 +27,17 @@ function BBGamePlayerManager:CreatePlayerFromServer(uid, directionX, directionY,
 	player.NMass = NMass;
 	player.direction.x = directionX;
 	player.direction.y = directionY;
-	player.FinalPoint.x = BBGameMathUtils.bb_int_to_float(finalPointX);
-	player.FinalPoint.y = BBGameMathUtils.bb_int_to_float(finalPointY);
+	player.FinalPoint.x = local_bb_int_to_float(finalPointX);
+	player.FinalPoint.y = local_bb_int_to_float(finalPointY);
 	player.Stopped = Stopped;
 	self.mapPlayers[uid] = player
-	for _, playerId in ipairs(self.playerIds or {}) do
-		if playerId == uid then
-			return
-		end
-	end
-	table.insert(self.playerIds, uid)
-	table.sort(self.playerIds, function(a, b) return a < b end)
+	-- for _, playerId in ipairs(self.playerIds or {}) do
+	-- 	if playerId == uid then
+	-- 		return
+	-- 	end
+	-- end
+	-- table.insert(self.playerIds, uid)
+	-- table.sort(self.playerIds, function(a, b) return a < b end)
 end
 
 function BBGamePlayerManager:GetPlayer(uid)
@@ -50,16 +51,17 @@ function BBGamePlayerManager:RemovePlayerNode(uid, nodeIdx)
 	local node = self.mapPlayerNodes[nodeIdx];
 	self.mapPlayerNodes[nodeIdx] = nil
 	-- mapPlayerNodes.erase(nodeIdx);
-	self.gameManager.NodeTree:RemoveCircleNode(node);
+	-- self.gameManager.NodeTree:RemoveCircleNode(node);
 
 	local player = self.mapPlayers[uid]
 	if player then
-		for i, playerNode in ipairs(player.vecPlayerNodes or {}) do
-			if playerNode == node then
-				table.remove(player.vecPlayerNodes, i)
-				return
-			end
-		end
+		player:RemovePlayerNode(node)
+		-- for i, playerNode in ipairs(player.vecPlayerNodes or {}) do
+		-- 	if playerNode == node then
+		-- 		table.remove(player.vecPlayerNodes, i)
+		-- 		return
+		-- 	end
+		-- end
 	end
 end
 
@@ -71,10 +73,10 @@ function BBGamePlayerManager:CreatePlayerNodeFromServer(uid, idx, fromId, x, y, 
 	newPlayerNode.fromId = fromId;
     newPlayerNode:SetBallMass(mass);
 	newPlayerNode.protect = protect;
-	newPlayerNode.currentSpeedVec.x = BBGameMathUtils.bb_int_to_float(speedX)
-	newPlayerNode.currentSpeedVec.y = BBGameMathUtils.bb_int_to_float(speedY)
-	newPlayerNode:ChangePosition(BBGameMathUtils.bb_int_to_float(x), BBGameMathUtils.bb_int_to_float(y));
-	newPlayerNode:ChangeRenderPosition(BBGameMathUtils.bb_int_to_float(x), BBGameMathUtils.bb_int_to_float(y));
+	newPlayerNode.currentSpeedVec.x = local_bb_int_to_float(speedX)
+	newPlayerNode.currentSpeedVec.y = local_bb_int_to_float(speedY)
+	newPlayerNode:ChangePosition(local_bb_int_to_float(x), local_bb_int_to_float(y));
+	newPlayerNode:ChangeRenderPosition(local_bb_int_to_float(x), local_bb_int_to_float(y));
 	newPlayerNode.initStopFrame = initStopFrame;
 	newPlayerNode.initSpeed = initSpeed;
 	newPlayerNode.initDeltaSpeed = initDeltaSpeed;
@@ -97,9 +99,9 @@ function BBGamePlayerManager:CreateSplitPlayerNodeFromServer(uid, idx, fromId, x
 	newPlayerNode.uid = uid;
 	newPlayerNode.player = player;
 	newPlayerNode.idx = idx;
-	newPlayerNode:ChangePosition(BBGameMathUtils.bb_int_to_float(x), BBGameMathUtils.bb_int_to_float(y));
-	newPlayerNode.currentSpeedVec.x = BBGameMathUtils.bb_int_to_float(speedX)
-	newPlayerNode.currentSpeedVec.y = BBGameMathUtils.bb_int_to_float(speedY)
+	newPlayerNode:ChangePosition(local_bb_int_to_float(x), local_bb_int_to_float(y));
+	newPlayerNode.currentSpeedVec.x = local_bb_int_to_float(speedX)
+	newPlayerNode.currentSpeedVec.y = local_bb_int_to_float(speedY)
 	newPlayerNode:SetBallMass(mass);
 	newPlayerNode.cd = cd;
 	newPlayerNode.protect = protect;
@@ -144,15 +146,6 @@ function BBGamePlayerManager:HandleFrameInputCommand()
 			if player then
 				player.mCommandList:pushCommand(command)
 			end
-		end
-	end
-end
-
-function BBGamePlayerManager:UpdatePlayer()
-	for _, playerId in ipairs(self.playerIds or {}) do
-		local player = self:GetPlayer(playerId)
-		if player then
-			player:Update()
 		end
 	end
 end

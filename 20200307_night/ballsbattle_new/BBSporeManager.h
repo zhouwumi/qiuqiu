@@ -18,7 +18,6 @@ public:
 	{
 		gameManager = manager;
 	}
-	void DebugCreateSpore();
 	Spore* CreateSpore(BBPlayerNode* node);
 	void RemoveSporeByIdx(int idx);
 	void ClearAllSpore();

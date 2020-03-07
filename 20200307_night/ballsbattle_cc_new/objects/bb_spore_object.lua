@@ -47,6 +47,7 @@ function SporeObject:OnJoinGame(idx)
 			self._mainPanel.spikySporeManager:ObjectPositionChange(self)
 		end)
 	end
+	self.displayObject:setLocalZOrder(self._mainPanel.spikySporeManager.nextSporeZOrder)
 end
 
 function SporeObject:GetCurrentCd()

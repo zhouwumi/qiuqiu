@@ -5,6 +5,7 @@ local constant_ballsbattle_cc = g_conf_mgr.get_constant('constant_ballsbattle_cc
 
 BBGamePlayerNodeObject, PlayerNodeSuper = CreateClass(BBGameMoveBallObject)
 
+local local_bb_int_to_float = BBGameMathUtils.bb_int_to_float
 function BBGamePlayerNodeObject:__init__()
 	PlayerNodeSuper.__init__(self)
 	self.uid = 0
@@ -30,6 +31,14 @@ function BBGamePlayerNodeObject:ChangeRenderPosition(newX, newY)
 	self.mDeltaData.location.y = newY
 	self.realX = newX
 	self.realY = newY
+end
+
+function BBGamePlayerNodeObject:ChangePosition(x, y)
+	PlayerNodeSuper.ChangePosition(self, x, y)
+	if self.player then
+		self.player._is_node_dirty = true
+	end
+	-- print("ChangePosition  ", self.location.x, self.location.y)
 end
 
 
@@ -217,9 +226,9 @@ function BBGamePlayerNodeObject:ClientSyncServerPlayerNode(fromId, x, y, mass, c
 	self.initStopFrame = initStopFrame
 	self.initSpeed = initSpeed
 	self.initDeltaSpeed = initDeltaSpeed
-	self.currentSpeedVec.x = BBGameMathUtils.bb_int_to_float(speedX)
-	self.currentSpeedVec.y = BBGameMathUtils.bb_int_to_float(speedY)
-	self:ChangePosition(BBGameMathUtils.bb_int_to_float(x), BBGameMathUtils.bb_int_to_float(y))
+	self.currentSpeedVec.x = local_bb_int_to_float(speedX)
+	self.currentSpeedVec.y = local_bb_int_to_float(speedY)
+	self:ChangePosition(local_bb_int_to_float(x), local_bb_int_to_float(y))
 	self:CalcBallDelta()
 	-- print("ClientSyncServerPlayerNode  ", self.currentSpeedVec.x, self.currentSpeedVec.y)
 end

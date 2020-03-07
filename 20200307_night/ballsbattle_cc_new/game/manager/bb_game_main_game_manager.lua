@@ -129,9 +129,8 @@ end
 
 function BBGameMainGameManager:GetAllPlayerIdxInRect(minX, maxX, minY, maxY)
 	local ret = {}
-	for _, playerId in ipairs(self.playerManager.playerIds or {}) do
-		local player = self:GetPlayer(playerId)
-		if player and #player.vecPlayerNodes > 0 then
+	for playerId, player in pairs(self.playerManager.mapPlayers or {}) do
+		if #player.vecPlayerNodes > 0 then
 			local rect = player:GetGroupRect()
 			if rect:IntersectsRectPoint(minX, maxX, minY, maxY) then
 				table.insert(ret, playerId)
@@ -390,12 +389,12 @@ end
 function BBGameMainGameManager:SetRealClientRenderXY(nodeIdx, x, y)
 	local node = self:GetPlayerNode(nodeIdx)
 	if not node then
-		print("SetRealClientRenderXY not find node ", nodeIdx)
+		-- print("SetRealClientRenderXY not find node ", nodeIdx)
 		return
 	end
 	node.realX = x
 	node.realY = y
-	print("SetRealClientRenderXY  ", x, y)
+	-- print("SetRealClientRenderXY  ", x, y)
 	-- if node.mass < constant_ballsbattle_cc.BBConfigManager.initBallMass then
 	-- 	node:SetBallMass(constant_ballsbattle_cc.BBConfigManager.initBallMass)
 	-- end

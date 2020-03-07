@@ -23,17 +23,6 @@ void BBSporeManager::ClearAllSpore()
 	mapSpores.clear();
 }
 
-void BBSporeManager::DebugCreateSpore()
-{
-	Spore* newSpore = gameManager->objectManager.DebugCreateSpore();
-	FixSpore(newSpore);
-	mapSpores.emplace(newSpore->idx, newSpore);
-	gameManager->NodeTree.AddCircleNode(newSpore);
-	gameManager->frameOutManager.AddNewSpore(newSpore->idx);
-	vecSporeIds.emplace_back(newSpore->idx);
-	std::sort(vecSporeIds.begin(), vecSporeIds.end());
-}
-
 Spore* BBSporeManager::CreateSpore(BBPlayerNode* node)
 {
 	Spore* newSpore = gameManager->objectManager.CreateSpore(node);
@@ -42,7 +31,7 @@ Spore* BBSporeManager::CreateSpore(BBPlayerNode* node)
 	gameManager->NodeTree.AddCircleNode(newSpore);
 	gameManager->frameOutManager.AddNewSpore(newSpore->idx);
 	vecSporeIds.emplace_back(newSpore->idx);
-	std::sort(vecSporeIds.begin(), vecSporeIds.end());
+	//std::sort(vecSporeIds.begin(), vecSporeIds.end());
 	return newSpore;
 }
 
@@ -63,7 +52,7 @@ void BBSporeManager::RemoveSporeByIdx(int idx)
 			break;
 		}
 	}
-	std::sort(vecSporeIds.begin(), vecSporeIds.end());
+	//std::sort(vecSporeIds.begin(), vecSporeIds.end());
 }
 
 Spore* BBSporeManager::GetSpore(int idx)
@@ -145,7 +134,7 @@ void BBSporeManager::AddNewSporeFromServer(int idx, int fromId, unsigned int uid
 	gameManager->NodeTree.AddCircleNode(newSpore);
 	//gameManager->frameCacheManager.AddNewSpore(newSpore->idx);
 	vecSporeIds.emplace_back(newSpore->idx);
-	std::sort(vecSporeIds.begin(), vecSporeIds.end());
+	//std::sort(vecSporeIds.begin(), vecSporeIds.end());
 }
 
 void BBSporeManager::SyncShootFromServer(int idx, int fromId, unsigned int uid, int speedX, int speedY, int locationX, int locationY)
@@ -174,7 +163,7 @@ void BBSporeManager::SyncShootFromServer(int idx, int fromId, unsigned int uid, 
 	gameManager->NodeTree.AddCircleNode(newSpore);
 	//gameManager->frameCacheManager.AddNewSpore(newSpore->idx);
 	vecSporeIds.emplace_back(newSpore->idx);
-	std::sort(vecSporeIds.begin(), vecSporeIds.end());
+	//std::sort(vecSporeIds.begin(), vecSporeIds.end());
 }
 
 unsigned int BBSporeManager::GetAllSporeCrc()

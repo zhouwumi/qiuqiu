@@ -4,10 +4,11 @@ local BBGameMathUtils = import('logic.dialog.ballsbattle_cc_new.game.math.bb_gam
 local BBGameSporeObject = import('logic.dialog.ballsbattle_cc_new.game.objects.bb_game_move_ball').BBGameSporeObject
 local constant_ballsbattle_cc = g_conf_mgr.get_constant('constant_ballsbattle_cc')
 
+local local_bb_int_to_float = BBGameMathUtils.bb_int_to_float
 function BBGameSporeManager:__init__(gameManager)
 	self.gameManager = gameManager
 	self.mapSpores = {}
-	self.vecSporeIds = {}
+	-- self.vecSporeIds = {}
 end
 
 function BBGameSporeManager:ClearAllSpore()
@@ -18,11 +19,11 @@ function BBGameSporeManager:RemoveSporeByIdx(idx)
 	if not self.mapSpores[idx] then return end
 	local sporeNode = self.mapSpores[idx];
 	self.mapSpores[idx] = nil
-	self.gameManager.NodeTree:RemoveCircleNode(sporeNode);
-	table.arr_remove_v(self.vecSporeIds, idx)
-	table.sort(self.vecSporeIds, function(a, b)
-		return a < b
-	end)
+	-- self.gameManager.NodeTree:RemoveCircleNode(sporeNode);
+	-- table.arr_remove_v(self.vecSporeIds, idx)
+	-- table.sort(self.vecSporeIds, function(a, b)
+	-- 	return a < b
+	-- end)
 end
 
 
@@ -59,7 +60,7 @@ function BBGameSporeManager:MoveSpores()
 			if sporeNode.cd > 0 then
 				sporeNode.cd = sporeNode.cd - 1
 			end
-			self.gameManager.NodeTree:UpdateCircleNode(sporeNode)
+			-- self.gameManager.NodeTree:UpdateCircleNode(sporeNode)
 		end
 	end
 end
@@ -69,8 +70,8 @@ function BBGameSporeManager:AddNewSporeFromServer(idx, fromId, uid, x, y, direct
 	newSpore.fromId = fromId
 	newSpore.idx = idx
 	newSpore.uid = uid
-	newSpore:ChangePosition(BBGameMathUtils.bb_int_to_float(x), BBGameMathUtils.bb_int_to_float(y))
-	newSpore:ChangeRenderPosition(BBGameMathUtils.bb_int_to_float(x), BBGameMathUtils.bb_int_to_float(y))
+	newSpore:ChangePosition(local_bb_int_to_float(x), local_bb_int_to_float(y))
+	newSpore:ChangeRenderPosition(local_bb_int_to_float(x), local_bb_int_to_float(y))
 
 	newSpore:SetBallMass(constant_ballsbattle_cc.BBConfigManager.sporeMass)
 	newSpore:SetSpeedVec(directionX, directionY);
@@ -81,9 +82,9 @@ function BBGameSporeManager:AddNewSporeFromServer(idx, fromId, uid, x, y, direct
 
 	newSpore:CalcBallDelta();
 	self.mapSpores[newSpore.idx] = newSpore
-	self.gameManager.NodeTree:AddCircleNode(newSpore);
-	table.insert(self.vecSporeIds, newSpore.idx)
-	table.sort(self.vecSporeIds, function(a, b) return a < b end)
+	-- self.gameManager.NodeTree:AddCircleNode(newSpore);
+	-- table.insert(self.vecSporeIds, newSpore.idx)
+	-- table.sort(self.vecSporeIds, function(a, b) return a < b end)
 end
 
 function BBGameSporeManager:SyncShootFromServer(idx, fromId, uid, speedX, speedY, locationX, locationY)
@@ -96,7 +97,7 @@ function BBGameSporeManager:SyncShootFromServer(idx, fromId, uid, speedX, speedY
 	newSpore.fromId = fromId
 	newSpore.idx = idx
 	newSpore.uid = uid
-	newSpore:ChangePosition(BBGameMathUtils.bb_int_to_float(locationX), BBGameMathUtils.bb_int_to_float(locationY))
+	newSpore:ChangePosition(local_bb_int_to_float(locationX), local_bb_int_to_float(locationY))
 	newSpore:SetBallMass(constant_ballsbattle_cc.BBConfigManager.sporeMass)
 	newSpore:SetSpeedVec(speedX, speedY);
 
@@ -108,7 +109,7 @@ function BBGameSporeManager:SyncShootFromServer(idx, fromId, uid, speedX, speedY
 	newSpore:CalculateInitMoveParams(newSpore:GetRadius(), constant_ballsbattle_cc.BBConfigManager.sporeStopFrame, constant_ballsbattle_cc.BBConfigManager.sporeInitSpeed)
 	newSpore:CalcBallDelta();
 	self.mapSpores[newSpore.idx] = newSpore
-	self.gameManager.NodeTree:AddCircleNode(newSpore)
-	table.insert(self.vecSporeIds, newSpore.idx)
-	table.sort(self.vecSporeIds, function(a, b) return a < b end)
+	-- self.gameManager.NodeTree:AddCircleNode(newSpore)
+	-- table.insert(self.vecSporeIds, newSpore.idx)
+	-- table.sort(self.vecSporeIds, function(a, b) return a < b end)
 end

@@ -11,7 +11,7 @@ function BBCCPlayerManager:__init__(mainPanel)
 	
 	self:ReEnter()
 	self.playerNodeObjectPool = ObjectPool:New(constant_ballsbattle_cc.BBObjectTypes.PlayerNode, self._mainPanel)
-	self.playerNodeObjectPool:CreateInitObjectCount(30)
+	self.playerNodeObjectPool:CreateInitObjectCount(120)
 end
 
 function BBCCPlayerManager:ReEnter()

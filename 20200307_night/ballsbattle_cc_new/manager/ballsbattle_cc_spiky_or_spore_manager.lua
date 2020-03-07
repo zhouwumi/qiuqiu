@@ -17,6 +17,7 @@ function BBCCSpikySporeManager:__init__(mainPanel)
 
 	self.spikyObjectPool = ObjectPool:New(constant_ballsbattle_cc.BBObjectTypes.Spiky, self._mainPanel)
 	self.spikyObjectPool:CreateInitObjectCount(30)
+	self.nextSporeZOrder = 0
 end
 
 function BBCCSpikySporeManager:ReEnter()
@@ -80,6 +81,7 @@ end
 
 function BBCCSpikySporeManager:CreateSporeFromServer(idx, fromId, cd)
 	-- local sporeObject = SporeObject:New(self._mainPanel)
+	self.nextSporeZOrder = self.nextSporeZOrder + 1
 	local sporeObject = self.sporeObjectPool:GetOrCreateObect()
 	sporeObject.fromId = fromId
 	sporeObject.cd = cd
