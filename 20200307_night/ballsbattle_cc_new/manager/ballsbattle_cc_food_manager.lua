@@ -97,22 +97,6 @@ function BBCCFoodManager:GetFoodObj(idx)
 	return self.foodMap[idx]
 end
 
-function BBCCFoodManager:SimulateEatFood()
-    local playerIds = {g_user_info.get_user_info().uid}
-    local results = self._mainPanel.gameManager:SimulateEatFoods(playerIds)
-
-    for index = 1, #results, 2 do
-        local nodeIdx = results[index]
-        local foodIdx = results[index + 1]
-        local food = self.foodMap[foodIdx]
-		if not food then
-			error("SimulateEatFood no food idx:  "..foodIdx)
-			return
-		end
-		food:SimulateHide(nodeIdx)
-    end
-end
-
 function BBCCFoodManager:_isFoodInVisibleRect(foodObject)
 	local nowRect = self.gridManager.nowRect
 	if nowRect and #nowRect > 0 then

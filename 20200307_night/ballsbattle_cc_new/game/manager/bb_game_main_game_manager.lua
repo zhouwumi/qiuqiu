@@ -235,20 +235,24 @@ function BBGameMainGameManager:CanAddPlayerCommand(uid)
 end
 
 function BBGameMainGameManager:SimulateEatFoods(x, y, radius)
-	local ret = {}
+	if not self.__eat_food_ret then
+		self.__eat_food_ret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	end
 	local TempPlayerRect = BBGameRect:New(x - radius, y - radius, x + radius, y + radius)
 	local eatIdxs = self.foodSpikyManager.FoodGridMap:GetAllHitIdxs(TempPlayerRect)
+	local retCount = 0
 	for _, idx in ipairs(eatIdxs) do
 		local food = self.foodSpikyManager:GetFood(idx)
 		if food then
 			local deltaX = x - food.location.x
 			local deltaY = y - food.location.y
 			if deltaX * deltaX + deltaY * deltaY <= radius * radius then
-				table.insert(ret, idx)
+				retCount = retCount + 1
+				self.__eat_food_ret[retCount] = idx
 			end
 		end
 	end
-	return ret
+	return self.__eat_food_ret, retCount
 end
 
 function BBGameMainGameManager:SimulateEatSpores(x, y, radius)

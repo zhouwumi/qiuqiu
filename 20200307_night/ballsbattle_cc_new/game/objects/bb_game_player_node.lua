@@ -6,6 +6,8 @@ local constant_ballsbattle_cc = g_conf_mgr.get_constant('constant_ballsbattle_cc
 BBGamePlayerNodeObject, PlayerNodeSuper = CreateClass(BBGameMoveBallObject)
 
 local local_bb_int_to_float = BBGameMathUtils.bb_int_to_float
+local local_bb_get_crc_best_value = BBGameMathUtils.bb_get_crc_best_value
+
 function BBGamePlayerNodeObject:__init__()
 	PlayerNodeSuper.__init__(self)
 	self.uid = 0
@@ -17,6 +19,7 @@ function BBGamePlayerNodeObject:__init__()
 	self.player = nil
 	self.realX = 0
 	self.realY = 0
+	self.__temp_crc_table = {0, 0}
 end
 
 function BBGamePlayerNodeObject:ChangeCd(delta)
@@ -69,7 +72,9 @@ function BBGamePlayerNodeObject:CalculateInitMoveParams(radius, frame, initSpeed
 end
 
 function BBGamePlayerNodeObject:GetCrc()
-	return BBGameMathUtils.GetCRC32({BBGameMathUtils.bb_get_crc_best_value(self.location.x), BBGameMathUtils.bb_get_crc_best_value(self.location.y)})
+	self.__temp_crc_table[1] = local_bb_get_crc_best_value(self.location.x)
+	self.__temp_crc_table[2] = local_bb_get_crc_best_value(self.location.y)
+	return BBGameMathUtils.GetCRC32(self.__temp_crc_table)
 end
 
 function BBGamePlayerNodeObject:Move(gameManager)
@@ -77,10 +82,13 @@ function BBGamePlayerNodeObject:Move(gameManager)
 	-- 	print("BBGamePlayerNodeObject Move before  ", self.idx, self.location.x, self.location.y, self.mDeltaData.location.x, self.mDeltaData.location.y)
 	-- end
 	
-	local oldLocation = {x = self.location.x, y = self.location.y}
+	local oldX = self.location.x
+	local oldY = self.location.y
+
+	-- local oldLocation = {x = self.location.x, y = self.location.y}
 	local locVecX, locVecY = self:_stepMove()
 	-- print("_stepMove ", locVecX, locVecY)
-	local isFix, fixedX, fixedY = BBGameMathUtils.FixCircle(gameManager.mapRect, locVecX, locVecY, self:GetRadius())
+	local isFix, fixedX, fixedY = BBGameMathUtils.FixCircle(gameManager.mapRect, locVecX, locVecY, self.radius)
 	locVecX = fixedX
 	locVecY = fixedY
 	-- print("fixCirlce  ", locVecX, locVecY, self:GetRadius())
@@ -93,7 +101,7 @@ function BBGamePlayerNodeObject:Move(gameManager)
 		end
 	end
 	
-	local isFix, fixedX, fixedY = BBGameMathUtils.FixCircle(gameManager.mapRect, locVecX, locVecY, self:GetRadius())
+	local isFix, fixedX, fixedY = BBGameMathUtils.FixCircle(gameManager.mapRect, locVecX, locVecY, self.radius)
 
 	locVecX = fixedX
 	locVecY = fixedY
@@ -101,8 +109,8 @@ function BBGamePlayerNodeObject:Move(gameManager)
 	self:ChangePosition(fixedX, fixedY)
 	
 	if not self.player.isCatchingUp then
-		local deltaX = self.location.x - oldLocation.x
-		local deltaY = self.location.y - oldLocation.y
+		local deltaX = self.location.x - oldX
+		local deltaY = self.location.y - oldY
 		local newRenderX = self.mDeltaData.location.x + deltaX
 		local newRenderY = self.mDeltaData.location.y + deltaY
 		if self.mDeltaData.wrapTicks > 0 then
@@ -137,36 +145,41 @@ function BBGamePlayerNodeObject:MoveBack(gameManager)
 end
 
 function BBGamePlayerNodeObject:_stepMove()
-	local finalPoint = {x = self.player.FinalPoint.x, y = self.player.FinalPoint.y}
+	local finalX = self.player.FinalPoint.x
+	local finalY = self.player.FinalPoint.y
+	-- local finalPoint = {x = self.player.FinalPoint.x, y = self.player.FinalPoint.y}
 	local lastX = self.location.x
 	local lastY = self.location.y
 	if self.initStopFrame > 0 then
 		self:InitMove()
 	end
-	local locVec = {x = self.location.x, y = self.location.y}
+
+	local locVecX = self.location.x
+	local locVecY = self.location.y
+	-- local locVec = {x = , y = self.location.y}
 	if self.currentSpeedVec.x ~= 0 or self.currentSpeedVec.y ~= 0 then
-		locVec.x = locVec.x + self.currentSpeedVec.x
-		locVec.y = locVec.y + self.currentSpeedVec.y
+		locVecX = locVecX + self.currentSpeedVec.x
+		locVecY = locVecY + self.currentSpeedVec.y
 		-- print("move speed:  ", self.currentSpeedVec.x, self.currentSpeedVec.y)
 		if self.initStopFrame > 0 then
-			return locVec.x, locVec.y
+			return locVecX, locVecY
 		end
 
-		if lastX <= finalPoint.x and locVec.x >= finalPoint.x then
-			locVec.x = finalPoint.x
+		if lastX <= finalX and locVecX >= finalX then
+			locVecX = finalX
 		end
-		if lastX >= finalPoint.x and locVec.x <= finalPoint.x then
-			locVec.x = finalPoint.x
+		if lastX >= finalX and locVecX <= finalX then
+			locVecX = finalX
 		end
 
-		if lastY <= finalPoint.y and locVec.y >= finalPoint.y then
-			locVec.y = finalPoint.y
+		if lastY <= finalY and locVecY >= finalY then
+			locVecY = finalY
 		end
-		if lastY >= finalPoint.y and locVec.y <= finalPoint.y then
-			locVec.y = finalPoint.y
+		if lastY >= finalY and locVecY <= finalY then
+			locVecY = finalY
 		end
 	end
-	return locVec.x, locVec.y
+	return locVecX, locVecY
 end
 
 function BBGamePlayerNodeObject:_handleNodeHit(locVecX, locVecY)

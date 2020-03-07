@@ -54,10 +54,18 @@ function BBGameMathUtils.GetFixedVetor2ByXY(x, y, length)
 end
 
 
-function BBGameMathUtils.GetCRC32(nums)
+function BBGameMathUtils.GetCRC32(nums, cnt)
+	if cnt == nil then
+		cnt = #nums
+	else
+		if cnt > #nums then
+			cnt = #nums
+		end
+	end
+
 	local tab = constant_ballsbattle_cc.CRC32_TABLE
 	local crc = 0xffffffff
-	for index = 1, #nums do
+	for index = 1, cnt do
 		local num = nums[index]
 		for i = 1, 4 do
 			local num1 = bit.band(bit.rshift(num, (i - 1) * 8), 0xff)

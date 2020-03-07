@@ -29,14 +29,14 @@ function BBGamePlayerObject:__init__()
 	self._mainPanel = g_panel_mgr.get_panel('ballsbattle_cc_new.dlg_ballsbattle_cc_main_panel')
 	self.groupRect = BBGameRect:New()
 	self._is_node_dirty = true
+	self.__crc_table = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 end
 
 function BBGamePlayerObject:GetCrc()
-	local nums = {}
-	for _, playerNode in ipairs(self.vecPlayerNodes or {}) do
-		table.insert(nums, playerNode:GetCrc())
+	for idx, playerNode in ipairs(self.vecPlayerNodes or {}) do
+		self.__crc_table[idx] = playerNode:GetCrc()
 	end
-	return BBGameMathUtils.GetCRC32(nums)
+	return BBGameMathUtils.GetCRC32(self.__crc_table, #self.vecPlayerNodes)
 end
 
 function BBGamePlayerObject:IsMe()

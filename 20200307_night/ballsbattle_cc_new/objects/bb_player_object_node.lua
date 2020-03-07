@@ -87,12 +87,17 @@ end
 
 function PlayerNodeObject:_simulateEatFood()	
 	local x, y = self.displayObject:GetPosition()
-	local results = self._mainPanel.gameManager:SimulateEatFoods(x, y, self.radius)
-	for _, idx in ipairs(results or {}) do
+	local results, cnt = self._mainPanel.gameManager:SimulateEatFoods(x, y, self.radius)
+	if cnt == nil then
+		cnt = #results
+	end
+	for index, idx in ipairs(results or {}) do
 		local obj = self._mainPanel.foodManager:GetFoodObj(idx)
 		if obj then
 			obj:SimulateHide(self.idx)
-
+		end
+		if index == cnt then
+			break
 		end
 	end
 	return true
