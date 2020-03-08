@@ -1,0 +1,37 @@
+{
+	"type_name":"CCNode",
+	"size":{
+		"height":100,
+		"width":100
+	},
+	"hide":true,
+	"child_list":[
+		{
+			"type_name":"LayerRadialGradient",
+			"pos":{
+				"x":"50%",
+				"y":"50%"
+			},
+			"size":{
+				"height":100,
+				"width":100
+			},
+			"endColor":16711680,
+			"startOpacity":100,
+			"endOpacity":100,
+			"radius":50,
+			"center":{
+				"x":50,
+				"y":50
+			}
+		},
+		{
+			"type_name":"RichLabel",
+			"name":"labelIdx",
+			"pos":{
+				"x":"50%",
+				"y":"50%"
+			}
+		}
+	]
+}

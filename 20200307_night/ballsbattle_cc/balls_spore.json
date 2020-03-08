@@ -1,0 +1,17 @@
+{
+	"type_name":"CCNode",
+	"size":{
+		"height":0,
+		"width":0
+	},
+	"child_list":[
+		{
+			"type_name":"CCSprite",
+			"name":"sp",
+			"displayFrame":{
+				"path":"ball_food/spore.png",
+				"plist":"gui/badam_ui/ballsbattle/food/food.plist"
+			}
+		}
+	]
+}

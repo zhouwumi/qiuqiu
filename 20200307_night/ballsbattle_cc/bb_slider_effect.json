@@ -1,0 +1,28 @@
+{
+	"type_name":"CCNode",
+	"anchor":{
+		"x":0,
+		"y":0
+	},
+	"scale":{
+		"x":0.5,
+		"y":0.5
+	},
+	"child_list":[
+		{
+			"type_name":"CCAnimateSprite",
+			"name":"animation",
+			"pos":{
+				"x":0,
+				"y":-8
+			},
+			"anchor":{
+				"x":0.5,
+				"y":0
+			},
+			"plist":"gui/Animation/ballsbattle/side_effect/qiuqiu_pengzhuang.plist",
+			"frameDelay":0.03,
+			"isPlay":false
+		}
+	]
+}
