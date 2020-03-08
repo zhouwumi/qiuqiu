@@ -98,6 +98,11 @@ void BBServerGameManager::AddPlayerQuit(int uid)
 	frameInManager.AddPlayerQuit(uid);
 }
 
+std::vector<int>& BBServerGameManager::GetFrameDiePlayerIds()
+{
+	return frameOutManager.deadPlayerIds;
+}
+
 unsigned int BBServerGameManager::GetAckCommand(unsigned int uid)
 {
 	BBPlayer* player = playerManager.GetPlayer(uid);

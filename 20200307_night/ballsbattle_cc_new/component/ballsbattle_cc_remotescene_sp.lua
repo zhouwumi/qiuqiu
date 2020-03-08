@@ -98,7 +98,8 @@ function RemoteScene:_caculateDirection(pos)
         angle = 0
     end
     -- print("current dirction  ", angle, percent)
-    if self._mainPanel.playerManager:GetMyPlayerObject() then
+    local playerObject = self._mainPanel.playerManager:GetMyPlayerObject()
+    if playerObject and not playerObject:IsDead() then
         self.currentDir = {angle, percent}
         self._mainPanel:GetMoveManager():SetMove(angle, percent)
         -- print(self._mainPanel.frame, angle, percent) 

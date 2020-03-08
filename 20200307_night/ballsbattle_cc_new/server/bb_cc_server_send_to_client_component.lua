@@ -5,7 +5,18 @@ local constant_ballsbattle_cc = g_conf_mgr.get_constant('constant_ballsbattle_cc
 function BBCCServerToClientComponent:__init__(mainPanel)
 	self._mainPanel = mainPanel
     self._frameCaches = {}
-    delay_call(1 / 60, function()
+end
+
+function BBCCServerToClientComponent:Stop()
+    if self.delay then
+        self.delay()
+        self.delay = nil
+    end
+    self._frameCaches = {}
+end
+
+function BBCCServerToClientComponent:ReStart()
+    self.delay = delay_call(1 / 60, function()
         if not self._mainPanel:is_valid() then
             return
         end

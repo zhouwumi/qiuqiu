@@ -63,10 +63,11 @@ function BBGamePlayerManager:RemovePlayerNode(uid, nodeIdx)
 		-- 	end
 		-- end
 	end
+	self.gameManager.clzManager:ReturnPlayerNode(node)
 end
 
 function BBGamePlayerManager:CreatePlayerNodeFromServer(uid, idx, fromId, x, y, mass, cd, protect, initStopFrame, initSpeed, initDeltaSpeed, speedX, speedY)
-	local newPlayerNode = BBGamePlayerNodeObject:New()
+	local newPlayerNode = self.gameManager.clzManager:GetPlayerNode()
 	newPlayerNode.uid = uid;
 	newPlayerNode.idx = idx;
 	newPlayerNode.cd = cd;
@@ -94,7 +95,7 @@ function BBGamePlayerManager:CreateSplitPlayerNodeFromServer(uid, idx, fromId, x
 	if not sourceNode then
 		return;
 	end
-	local newPlayerNode = BBGamePlayerNodeObject:New()
+	local newPlayerNode = self.gameManager.clzManager:GetPlayerNode()
 	newPlayerNode.fromId = fromId;
 	newPlayerNode.uid = uid;
 	newPlayerNode.player = player;
@@ -117,7 +118,7 @@ function BBGamePlayerManager:CreateSplitPlayerNodeFromServer(uid, idx, fromId, x
 end
 
 function BBGamePlayerManager:AddPlayerSplitNewBallFromServer(idx, fromId, uid, mass, x, y, directionX, directionY, currentX, currentY, curSpeed, deltaSpeed, initStopFrame, cd, protect)
-	local newPlayerNode = BBGamePlayerNodeObject:New()
+	local newPlayerNode = self.gameManager.clzManager:GetPlayerNode()
 	newPlayerNode.uid = uid;
 	newPlayerNode.idx = idx;
 	newPlayerNode.cd = cd;

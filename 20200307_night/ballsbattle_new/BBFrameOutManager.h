@@ -64,6 +64,8 @@ public:
 
 	bool IsNodeHasBeEat(int nodeId);
 
+	void AddPlayerDie(int uid);
+
 	void AddCrc(unsigned int uid, unsigned int crc);
 public:
 	std::vector<int> joinPlayerIds;// new players
@@ -95,6 +97,8 @@ public:
 	std::vector<int> newSpikyIdxs;
 
 	std::unordered_map<unsigned int, std::vector<int>> uid2crcs; //uid->crc list
+
+	std::vector<int> deadPlayerIds;
 };
 
 #endif

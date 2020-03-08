@@ -36,6 +36,19 @@ function PlayerNodeObject:OnJoinGame(idx)
 	-- self.displayObject.labelDelay:setVisible(false)
 end
 
+function PlayerNodeObject:SyncRenderPosition()
+	self:_updateBaseInfo()
+	self:_jumpToRenderXY()
+	local x, y = self.displayObject:GetPosition()
+	local isInVisible = self:_isPointInVisible(x, y)
+	if isInVisible then
+		self.displayObject:setVisible(true)
+		-- self:_trySimulateEat()
+	else
+		self.displayObject:setVisible(false)
+	end
+end
+
 function PlayerNodeObject:Update(isJump)
 	if self.isDestory then
 		return
@@ -58,7 +71,7 @@ function PlayerNodeObject:_updatePosition(isFirst)
 			local isInVisible = self:_isPointInVisible(x, y)
 			if isInVisible then
 				self.displayObject:setVisible(true)
-				self:_trySimulateEat()
+				-- self:_trySimulateEat()
 			else
 				self.displayObject:setVisible(false)
 			end
@@ -66,7 +79,7 @@ function PlayerNodeObject:_updatePosition(isFirst)
 	else
 		self:_updateMePosition(isFirst)
 		self.displayObject:setVisible(true)
-		self:_trySimulateEat()
+		-- self:_trySimulateEat()
 	end
 	self:_updateBluePosition()
 end
@@ -87,12 +100,12 @@ end
 
 function PlayerNodeObject:_simulateEatFood()	
 	local x, y = self.displayObject:GetPosition()
-	local results, cnt = self._mainPanel.gameManager:SimulateEatFoods(x, y, self.radius)
-	if cnt == nil then
-		cnt = #results
+	local results, cnt = self._mainPanel.foodManager:SimulateEatFoods(x, y, self.radius)
+	if cnt <= 0 then
+		return
 	end
-	for index, idx in ipairs(results or {}) do
-		local obj = self._mainPanel.foodManager:GetFoodObj(idx)
+	for index, obj in ipairs(results or {}) do
+		-- local obj = self._mainPanel.foodManager:GetFoodObj(idx)
 		if obj then
 			obj:SimulateHide(self.idx)
 		end

@@ -156,6 +156,7 @@ end
 
 function Panel:ChangeDesk()
     self:ReEnter()
+    self.serverComponent:Disconnect()
     self:get_layer():DelayCall(1, function()
         self.serverComponent:JoinPlayer(g_user_info.get_user_info().uid)
     end)

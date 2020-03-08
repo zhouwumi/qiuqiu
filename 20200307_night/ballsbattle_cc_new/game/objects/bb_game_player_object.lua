@@ -229,6 +229,7 @@ function BBGamePlayerObject:_clientUpdateHandleOther()
 						self:_clientOtherPrediction(true);
 					end
 				end
+				self.gameManager.clzManager:ReturnSimplePrediction(firstCommand)
 			else 
 				-- //计算结果和服务器的结果如果出现不一致的情况,需要进行一次状态同步
 				local crc = self:processTick(command);
@@ -268,7 +269,8 @@ function BBGamePlayerObject:_clientOtherPrediction(forceUpdate)
 	if forceUpdate == nil then forceUpdate = false end
 	if self.predictionData.lastAngle == 0 and self.predictionData.lastPressure == 0 then
 		self.predictionCommand:ClearData()
-		local prediction = BBGameSimplePrediction:New()
+		-- local prediction = BBGameSimplePrediction:New()
+		local prediction = self.gameManager.clzManager:GetSimplePrediction()
 		prediction.angle = self.predictionData.lastAngle
 		prediction.pressure = self.predictionData.lastPressure
 
@@ -288,7 +290,7 @@ function BBGamePlayerObject:_clientOtherPrediction(forceUpdate)
 	self.predictionCommand.angle = self.predictionData.lastAngle;
 	self.predictionCommand.pressure = self.predictionData.lastPressure;
 
-	local prediction = BBGameSimplePrediction:New()
+	local prediction = self.gameManager.clzManager:GetSimplePrediction()
 	prediction.angle = self.predictionData.lastAngle;
 	prediction.pressure = self.predictionData.lastPressure;
 

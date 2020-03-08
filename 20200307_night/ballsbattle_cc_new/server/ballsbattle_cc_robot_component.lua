@@ -107,7 +107,9 @@ function BBCCRobotComponent:RunLoop()
 			return
 		end
 		
-		self._mainPanel.serverComponent:AddPlayerCommand(self.uid, self.curAngle, self.curPressure, isSplit, isShoot, self.nextIdx, 0)
+		if not self._mainPanel.serverComponent:IsPlayerDie(self.uid) then
+			self._mainPanel.serverComponent:AddPlayerCommand(self.uid, self.curAngle, self.curPressure, isSplit, isShoot, self.nextIdx, 0)
+		end
 	end)
 	
 	local shakeDelay = 0

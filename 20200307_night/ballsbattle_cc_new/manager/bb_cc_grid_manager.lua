@@ -16,6 +16,7 @@ end
 function BBCCGridManager:ReEnter()
 	self.nowRect = {}
 	self.oldRect = nil
+	self.updateTime = nil
 end
 
 function BBCCGridManager:OnUpdateGridVisible(force)

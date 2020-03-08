@@ -38,11 +38,11 @@ function BBCCFrameManager:_getCanUpdatePlayerIds()
         end
         self.lastPlayerCount = #playerIds
         self._mainPanel.labelPlayerCount:SetString('同屏人数  '..#playerIds)
-        local show_str = ''
-        for _, playerId in ipairs(playerIds) do
-            show_str = show_str..playerId.."\n"
-        end
-        self._mainPanel.labelUpdatePlayerIds:SetString(show_str)
+        -- local show_str = ''
+        -- for _, playerId in ipairs(playerIds) do
+        --     show_str = show_str..playerId.."\n"
+        -- end
+        -- self._mainPanel.labelUpdatePlayerIds:SetString(show_str)
         return playerIds
     else
         return table.keys(self.playerManager.allPlayers)

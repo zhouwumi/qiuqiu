@@ -9,6 +9,9 @@ local SporeObject = import('logic.dialog.ballsbattle_cc_new.objects.bb_spore_obj
 local FoodObject = import('logic.dialog.ballsbattle_cc_new.objects.bb_food_object').FoodObject
 local BBCommonEffectObject = import('logic.dialog.ballsbattle_cc_new.objects.bb_common_effect_object').BBCommonEffectObject
 
+local BBGameSimplePrediction = import('logic.dialog.ballsbattle_cc_new.game.data.bb_game_prediction_data').BBGameSimplePrediction
+local BBGamePlayerNodeObject = import('logic.dialog.ballsbattle_cc_new.game.objects.bb_game_player_node').BBGamePlayerNodeObject
+
 function ObjectPool:__init__(type, mainPanel)
 	self._type = type
 	self._mainPanel = mainPanel
@@ -42,6 +45,10 @@ function ObjectPool:_createObject(...)
 		return FoodObject:New(self._mainPanel, ...)
 	elseif self._type == constant_ballsbattle_cc.BBObjectTypes.SliderEffect then
 		return BBCommonEffectObject:New(self._mainPanel, ...)
+	elseif self._type == constant_ballsbattle_cc.BBClassTypes.BBGameSimplePrediction then
+		return BBGameSimplePrediction:New(...)
+	elseif self._type == constant_ballsbattle_cc.BBClassTypes.BBGamePlayerNodeObject then
+		return BBGamePlayerNodeObject:New(...)
 	end
 end
 
@@ -68,7 +75,9 @@ end
 function ObjectPool:CreateInitObjectCount(count, ...)
 	for index = 1, count do
 		local ret = self:_createObject(...)
-		ret:Hide()
+		if ret.Hide then
+			ret:Hide()
+		end
 		table.insert(self._allUsableObject, ret)
 	end
 	self._allUsingObject = {}

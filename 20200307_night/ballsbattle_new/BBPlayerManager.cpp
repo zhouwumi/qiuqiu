@@ -104,15 +104,24 @@ void BBPlayerManager::CreatePlayerFromServer(unsigned int uid, int directionX, i
 	{
 		return;
 	}
-	BBPlayer* player = new BBPlayer(uid);
-	player->SetGameManager(gameManager);
+	BBPlayer* player = NULL;
+	auto iter = mapPlayers.find(uid);
+	if (iter == mapPlayers.end())
+	{
+		player = new BBPlayer(uid);
+		player->SetGameManager(gameManager);
+		mapPlayers.emplace(uid, player);
+	}
+	else {
+		player = iter->second;
+	}
+	player->ResetCommands();
 	player->NMass = NMass;
 	player->direction.x = directionX;
 	player->direction.y = directionY;
 	player->FinalPoint.x = BBMathUtils::bb_int_to_float(finalPointX);
 	player->FinalPoint.y = BBMathUtils::bb_int_to_float(finalPointY);
 	player->Stopped = Stopped;
-	mapPlayers.emplace(uid, player);
 	//gameManager->frameOutManager.AddNewPlayer(uid);
 	for (int i = 0; i < playerIds.size(); i++)
 	{
@@ -214,6 +223,11 @@ void BBPlayerManager::RemovePlayerNode(unsigned int uid, unsigned int nodeIdx)
 				player->vecPlayerNodes.erase(player->vecPlayerNodes.begin() + i);
 				break;
 			}
+		}
+
+		if (player->vecPlayerNodes.size() == 0 && gameManager->IsServer())
+		{
+			gameManager->frameOutManager.AddPlayerDie(uid);
 		}
 	}
 	

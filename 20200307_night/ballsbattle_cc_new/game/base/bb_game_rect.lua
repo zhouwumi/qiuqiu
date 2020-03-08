@@ -73,7 +73,7 @@ function BBGameRect:IntersectsRectPoint(minX, maxX, minY, maxY)
 end
 
 function BBGameRect:SetZero()
-	self:setRect(0, 0, 0, 0)
+	self:SetRect(0, 0, 0, 0)
 end
 
 function BBGameRect:IsZero()

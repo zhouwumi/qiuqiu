@@ -241,7 +241,10 @@ function BBGameQuadTree:GetQuadTypeByRect(rect)
 end
 
 function BBGameQuadTree:_getRect(type)
-	local rect = BBGameRect:New()
+	if not BBGameQuadTree.__temp_rect then
+		BBGameQuadTree.__temp_rect = BBGameRect:New()
+	end
+	local rect = BBGameQuadTree.__temp_rect
 	if type == QuadType.UL then
 		rect:SetRect(self.rect.minX, self.rect.centerY, self.rect.centerX, self.rect.maxY)
 	elseif type == QuadType.UR then

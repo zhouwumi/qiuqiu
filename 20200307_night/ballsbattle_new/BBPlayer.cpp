@@ -51,6 +51,7 @@ void BBPlayer::ResetCommands()
 	lastMoveCommandIdx = -1;
 	mCommandList.mCommandVec.clear();
 	predictionData.ClearData();
+	isCatchingUp = false;
 }
 
 bool BBPlayer::IsNeedSyncState()

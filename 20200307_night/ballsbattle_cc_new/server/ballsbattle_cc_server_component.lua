@@ -51,10 +51,17 @@ function BBCCServerComponent:__init__(mainPanel)
 
 	self.frameCommands = {}
 	self.frameRequestData = {}
+	self.diePlayerIds = {}
 end
 
 function BBCCServerComponent:JoinPlayer(uid)
 	self.gameManager:AddOperatePlayerJoin(uid)
+end
+
+function BBCCServerComponent:Disconnect()
+	self.isConnect = false
+	self.serverToClientComponent:Stop()
+	-- self.gameManager:AddPlayerQuit(u)
 end
 
 function BBCCServerComponent:AddPlayerCommand(uid, angle, pressure, isSplit, isShoot, commandIdx, checkSum)
@@ -81,7 +88,7 @@ function BBCCServerComponent:FrameUpdate()
 	local time1 = utils_get_tick()
 	self.gameManager:FrameUpdate()
 	local time2 = utils_get_tick()
-	if not self:SyncFirstData() then
+	if not self:SyncFirstData() and self.isConnect then
 		self:SyncNewFood()
 		self:SyncNewSpore()
 		self:SyncNewSpiky()
@@ -101,6 +108,20 @@ function BBCCServerComponent:FrameUpdate()
 	local time3 = utils_get_tick()
 	-- print("服务器执行完成  ", time2 - time1, time3 - time2, self._mainPanel.frame)
 	self.serverToClientComponent:EndNewFrame()
+
+	local playerIds = self.gameManager:GetFrameDiePlayerIds()
+	for _, playerId in ipairs(playerIds or {}) do
+		self.diePlayerIds[playerId] = true
+		self._mainPanel:get_layer():DelayCall(5, function()
+			self.diePlayerIds[playerId] = false
+			self:JoinPlayer(playerId)
+		end)
+	end
+	self._frame_generate_main_player = false
+end
+
+function BBCCServerComponent:IsPlayerDie(uid)
+	return self.diePlayerIds[uid]
 end
 
 local function _getPackSporeInfo(idx, fromId, uid, speedX, speedY, x, y, initSpeed, initDeltaSpeed, initStopFrame, cd)
@@ -143,6 +164,9 @@ function BBCCServerComponent:SyncCommands()
 end
 
 function BBCCServerComponent:UpdateFakeNodeDisplay() 
+	if not constant_ballsbattle_cc.ShowShadow then
+		return
+	end
 	local playerIds = self.gameManager:GetAllPlayerIdxs()
 	for _, playerId in ipairs(playerIds or {}) do
 		local playerNodeIds = self.gameManager:GetAllPlayerNodeIdxs(playerId)
@@ -154,6 +178,9 @@ function BBCCServerComponent:UpdateFakeNodeDisplay()
 end
 
 function BBCCServerComponent:SyncFirstData()
+	if self.isConnect then
+		return
+	end
 	local hasFind = false
 	local newPlayerIds = self.gameManager:GetFrameNewPlayer()
 	for _, playerId in ipairs(newPlayerIds or {}) do
@@ -164,7 +191,8 @@ function BBCCServerComponent:SyncFirstData()
 	if not hasFind then
 		return false
 	end
-	
+	self.isConnect = true
+
 	local ret = {}
 	local foodInfos = self.gameManager:GetAllFoodInfos()
 	local spikyInfoIds = self.gameManager:GetAllSpikyInfos()
@@ -192,6 +220,7 @@ function BBCCServerComponent:SyncFirstData()
 	ret.sporeInfos = sporeInfos
 	ret.playerInfos = playerInfos
 
+	self.serverToClientComponent:ReStart()
 	self.serverToClientComponent:SyncFirstData(ret)
 	return true
 end
@@ -206,6 +235,9 @@ function BBCCServerComponent:SyncNewPlayers()
 	for _, playerId in ipairs(newPlayerIds or {}) do
 		local playerInfo = self:_getPlayerFrameData(playerId)
 		ret.newPlayers[playerId] = playerInfo
+		if playerId == g_user_info.get_user_info().uid then
+			self._frame_generate_main_player = true
+		end
 	end
 	self.serverToClientComponent:SyncNewPlayers(ret)
 end
@@ -246,8 +278,26 @@ function BBCCServerComponent:_getPlayerFrameData(playerId)
 	return playerInfo
 end
 
+function BBCCServerComponent:Mass2Radius(mass)
+	return 4 + math.ceil(math.sqrt(mass) * 6)
+end
+
+function BBCCServerComponent:getVisibleRect()
+	local playerNodeIds = self.gameManager:GetAllPlayerNodeIdxs(g_user_info.get_user_info().uid)
+	for _, playerNodeId in ipairs(playerNodeIds or {}) do
+		local uid, idx, fromId, x, y, mass, cd, protect, initStopFrame, initSpeed, initDeltaSpeed, speedX, speedY = self.gameManager:GetPlayerNodeInfo(playerNodeId)
+		local raidus = self:Mass2Radius(mass)
+		local startx, starty, endx, endy = x - raidus, y - raidus, x + raidus, y + raidus
+		return startx - 1280, starty + 1280, endx - 960, endy + 960
+	end	
+end
+
 function BBCCServerComponent:_getCanUpdatePlayerIds()
-    local minX, minY, maxX, maxY = self._mainPanel.bgComponent:GetCanSyncRect()
+	local minX, minY, maxX, maxY
+	if self._frame_generate_main_player then
+		minX, minY, maxX, maxY = self:getVisibleRect() 
+	end
+    minX, minY, maxX, maxY = self._mainPanel.bgComponent:GetCanSyncRect()
     local playerIds = self.gameManager:GetAllPlayerIdxInRect(minX, maxX, minY, maxY)
     return playerIds
 end

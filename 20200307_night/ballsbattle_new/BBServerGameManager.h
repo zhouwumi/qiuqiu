@@ -36,6 +36,7 @@ public:
 	std::vector<int>& GetFrameNewSpiky();
 	std::vector<int>& GetFrameNewSpore();
 	
+	std::vector<int>& GetFrameDiePlayerIds();
 
 	std::vector <std::string> GetServerLog();
 	void ClearServerLog();

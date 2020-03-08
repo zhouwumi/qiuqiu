@@ -19,6 +19,7 @@ function FoodObject:__init__(mainPanel)
 end
 
 function FoodObject:OnJoinGame(x, y, key)
+	self.isDestory = false
 	self.displayObject:SetPosition(x, y)
 	
 	self.displayObject.label:SetString(tostring(x.."_"..y))

@@ -1,5 +1,6 @@
 BBGameMainGameManager = CreateClass()
 
+local BBGameClzManager = import('logic.dialog.ballsbattle_cc_new.game.manager.bb_game_clz_manager').BBGameClzManager
 local BBGameFoodSpikyManager = import('logic.dialog.ballsbattle_cc_new.game.manager.bb_game_food_spiky_manager').BBGameFoodSpikyManager
 local BBGameFrameInManager = import('logic.dialog.ballsbattle_cc_new.game.manager.bb_game_frame_in_manager').BBGameFrameInManager
 local BBGameObjectManager = import('logic.dialog.ballsbattle_cc_new.game.manager.bb_game_object_manager').BBGameObjectManager
@@ -19,16 +20,19 @@ function BBGameMainGameManager:__init__()
 	self.NodeTree = BBGameQuadTree:New(w, h)
 	self.NodeTree:OnBuildFinish()
 
+	self.clzManager = BBGameClzManager:New()
+
 	self.objectManager = BBGameObjectManager:New(self)
 	self.playerManager = BBGamePlayerManager:New(self)
 	self.frameInManager = BBGameFrameInManager:New(self)
-	self.foodSpikyManager = BBGameFoodSpikyManager:New(self)
+	-- self.foodSpikyManager = BBGameFoodSpikyManager:New(self)
 	self.sporeManager = BBGameSporeManager:New(self)
 	self.moveManager = BBGameMoveManager:New()
 	self.configManager = BBGameConfigManager:New()
 
-	self.spikyRect = BBGameRect:New(500, 500, w - 500, h - 500)
+	-- self.spikyRect = BBGameRect:New(500, 500, w - 500, h - 500)
 	self.mapRect = BBGameRect:New(0, 0, w, h)
+	self.__TempPlayerRect = BBGameRect:New()
 end
 
 function BBGameMainGameManager:GetGameFrame()
@@ -91,10 +95,6 @@ function BBGameMainGameManager:UpdatePlayer(uid)
 	if player then
 		player:Update()
 	end
-end
-
-function BBGameMainGameManager:GetSpiky(idx)
-	return self.foodSpikyManager:GetSpikyInfo(idx)
 end
 
 function BBGameMainGameManager:GetSpore(idx)
@@ -201,25 +201,12 @@ function BBGameMainGameManager:CreatePlayerFromServer(uid, directionX, direction
 	self.playerManager:CreatePlayerFromServer(uid, directionX, directionY, NMass, finalPointX, finalPointY, Stopped);
 end
 
-function BBGameMainGameManager:AddNewFoodFromServer(posKey)
-	self.foodSpikyManager:ClientAddNewFoodFromServer(posKey);
-end
-
-
 function BBGameMainGameManager:AddNewSporeFromServer(idx, fromId, uid, x, y, directionX, directionY,curSpeed, deltaSpeed, initStopFrame, cd)
 	self.sporeManager:AddNewSporeFromServer(idx, fromId, uid, x, y, directionX, directionY, curSpeed, deltaSpeed, initStopFrame, cd);
 end
 
-function BBGameMainGameManager:AddNewSpikyFromServer(idx, posKey, mass)
-	self.foodSpikyManager:ClientAddNewSpikyFromServer(idx, posKey, mass)
-end
-
 function BBGameMainGameManager:SyncShootFromServer(idx, fromId, uid, speedX, speedY, locationX, locationY)
 	self.sporeManager:SyncShootFromServer(idx, fromId, uid, speedX, speedY, locationX, locationY);
-end
-
-function BBGameMainGameManager:RemoveFoodFromServer(posKey)
-	self.foodSpikyManager:RemoveFoodByIdx(posKey);
 end
 
 function BBGameMainGameManager:RemoveSporeFromServer(sporeIdx)
@@ -234,53 +221,15 @@ function BBGameMainGameManager:CanAddPlayerCommand(uid)
 	return false;
 end
 
-function BBGameMainGameManager:SimulateEatFoods(x, y, radius)
-	if not self.__eat_food_ret then
-		self.__eat_food_ret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	end
-	local TempPlayerRect = BBGameRect:New(x - radius, y - radius, x + radius, y + radius)
-	local eatIdxs = self.foodSpikyManager.FoodGridMap:GetAllHitIdxs(TempPlayerRect)
-	local retCount = 0
-	for _, idx in ipairs(eatIdxs) do
-		local food = self.foodSpikyManager:GetFood(idx)
-		if food then
-			local deltaX = x - food.location.x
-			local deltaY = y - food.location.y
-			if deltaX * deltaX + deltaY * deltaY <= radius * radius then
-				retCount = retCount + 1
-				self.__eat_food_ret[retCount] = idx
-			end
-		end
-	end
-	return self.__eat_food_ret, retCount
-end
-
-function BBGameMainGameManager:SimulateEatSpores(x, y, radius)
-	local ret = {}
-	-- local eatIdxs = {}
-	-- local TempPlayerRect = BBGameRect:New(x - radius, y - radius, x + radius, y + radius)
-	-- self.NodeTree:GetAllHitCircleNodeIdxs(TempPlayerRect, eatIdxs)
-	-- for _, idx in ipairs(eatIdxs) do
-	-- 	local spore = self.sporeManager:GetSpore(idx)
-	-- 	if spore then
-	-- 		local deltaX = x - spore.location.x
-	-- 		local deltaY = y - spore.location.y
-	-- 		if deltaX * deltaX + deltaY * deltaY <= radius * radius then
-	-- 			table.insert(ret, idx)
-	-- 		end
-	-- 	end
-	-- end
-	return ret
-	-- return {}
-end
 
 function BBGameMainGameManager:GetNodeInRound(nodeIdx, expandCircle)
 	local ret = {}
 	local playerNode = self:GetPlayerNode(nodeIdx);
 	if playerNode then
 		local TempVec = {}
-		local TempPlayerRect = playerNode.rect:Expand(expandCircle, expandCircle);
-		self.NodeTree:GetAllHitCircleNodeIdxs(TempPlayerRect, TempVec);
+		self.__TempPlayerRect:Copy(playerNode.rect)
+		self.__TempPlayerRect:Expand(expandCircle, expandCircle)
+		self.NodeTree:GetAllHitCircleNodeIdxs(self.__TempPlayerRect, TempVec);
 		for _, idx in ipairs(TempVec or {}) do
 			local targetNode = self:GetPlayerNode(idx)
 			if targetNode then

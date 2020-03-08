@@ -33,10 +33,39 @@ function BBCCFoodManager:ReEnter()
 	end
 end
 
+function BBCCFoodManager:SimulateEatFoods(x, y, radius)
+	if not self.__eat_food_ret then
+		self.__eat_food_ret = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	end
+	local minGridX = math.floor((x - radius) / self.foodGridSize)
+	local maxGridX = math.floor((x + radius) / self.foodGridSize)
+	local minGridY = math.floor((y - radius) / self.foodGridSize)
+	local maxGridY = math.floor((y + radius) / self.foodGridSize)
+
+	local retCount = 0
+	for gridX = minGridX, maxGridX do
+		for gridY = minGridY, maxGridY do
+			local xMap = self.foodGridMap[gridX]
+			if xMap then
+				local grid = xMap[gridY]
+				for _, foodObject in pairs(grid or {}) do
+					local deltaX = x - foodObject.initX
+					local deltaY = y - foodObject.initY
+					if deltaX * deltaX + deltaY * deltaY <= radius * radius then
+						retCount = retCount + 1
+						self.__eat_food_ret[retCount] = foodObject
+					end
+				end
+			end
+		end
+	end
+	return self.__eat_food_ret, retCount
+end
+
 function BBCCFoodManager:CreateFoodWithServerInfo(foodInfo)
 	local posKey = foodInfo
 	local x, y = BBCCUtils.UnPackServerLocation(posKey)
-	self._mainPanel.gameManager:AddNewFoodFromServer(posKey)
+	-- self._mainPanel.gameManager:AddNewFoodFromServer(posKey)
     -- local foodObj = FoodObject:New(self._mainPanel)
     local foodObj = self.objectPool:GetOrCreateObect()
     foodObj:OnJoinGame(x, y, posKey)

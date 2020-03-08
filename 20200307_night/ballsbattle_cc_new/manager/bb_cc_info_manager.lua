@@ -22,8 +22,12 @@ function BBCCInfoManager:ReEnter()
     show_loading_panel("wait_player", 10)
 end
 
+local function unpackSporeInfo(sporeInfo)
+    return sporeInfo.idx, sporeInfo.fromId, sporeInfo.uid, sporeInfo.speedX, sporeInfo.speedY, sporeInfo.x, sporeInfo.y, sporeInfo.initSpeed, sporeInfo.initDeltaSpeed, sporeInfo.initStopFrame, sporeInfo.cd
+end
+
 function BBCCInfoManager:SyncFirstData(data)
-    -- print("同步初始信息", data)
+   
     local sporeInfos = data.sporeInfos or {}
     for _, sporeInfo in pairs(sporeInfos) do
         local idx, fromId, uid, speedX, speedY, x, y, initSpeed, initDeltaSpeed, initStopFrame, cd = unpackSporeInfo(sporeInfo)
@@ -35,15 +39,16 @@ function BBCCInfoManager:SyncFirstData(data)
         for index = 1, #data.foodInfos do
             local idx = data.foodInfos[index]
             self.foodManager:CreateFoodWithServerInfo(idx)
-            self.gameManager:AddNewFoodFromServer(idx)
+            -- self.gameManager:AddNewFoodFromServer(idx)
         end
     end
+     -- print("同步初始信息", data.foodInfos)
 
     if data.spikyInfos then
         for _, spikyInfo in ipairs(data.spikyInfos or {}) do
             local idx, x, y, mass, radius = unpack(spikyInfo)
             local pos = BBCCUtils.ClientPackLocation(x, y)
-            self.gameManager:AddNewSpikyFromServer(idx, pos, mass)
+            -- self.gameManager:AddNewSpikyFromServer(idx, pos, mass)
 
             local newSpikyInfo = {}
             newSpikyInfo.x = x
@@ -57,7 +62,7 @@ function BBCCInfoManager:SyncFirstData(data)
         for _, playerInfo in pairs(data.playerInfos) do
             self:_syncInitCreatePlayer(playerInfo)
         end
-        self.playerManager:GeneratePlayerAndNodes(data.playerInfos)
+        -- self.playerManager:GeneratePlayerAndNodes(data.playerInfos)
     end
     close_loading_panel("wait_player")
     self.bgComponent:Update()
@@ -72,37 +77,8 @@ function BBCCInfoManager:SyncFirstData(data)
 end
 
 function BBCCInfoManager:_syncInitCreatePlayer(data)
-    local playerId = data.uid
-    local directionX = data.directionX
-    local directionY = data.directionY
-    local nmass = data.nmass
-    local ackCommand = data.ackCommand
-    local finalPointX = data.finalPointX
-    local finalPointY = data.finalPointY
-    local stopped = data.stopped
-    -- print("新加入一个玩家", playerId, directionX, directionY, nmass, finalPointX, finalPointY, stopped)
-    self.gameManager:CreatePlayerFromServer(playerId, directionX, directionY, nmass,finalPointX, finalPointY, stopped)
-    -- if playerId == g_user_info.get_user_info().uid then
-    --     isMeBirth = true
-    -- end
-
-    for _, node in ipairs(data.nodes) do
-        local uid = node.uid
-        local idx = node.idx
-        local mass = node.mass
-        local fromId = node.fromId
-        local x = node.x
-        local y = node.y
-        local cd = node.cd
-        local protect = node.protect
-        local initStopFrame = node.initStopFrame
-        local initSpeed = node.initSpeed
-        local initDeltaSpeed = node.initDeltaSpeed
-        local speedX = node.speedX
-        local speedY = node.speedY
-        -- print("新加入一个节点  ", uid, idx)
-        self.gameManager:CreatePlayerNodeFromServer(uid, idx, fromId, x, y, mass, cd, protect, initStopFrame, initSpeed, initDeltaSpeed,speedX,speedY)
-    end
+    self.playerManager:GeneratePlayer(data)
+    self.playerManager:GeneratePlayerNodes(data)
 end
 
 function BBCCInfoManager:SyncNewPlayers(data)
@@ -112,17 +88,40 @@ function BBCCInfoManager:SyncNewPlayers(data)
     -- for _, data in pairs(newPlayers or {}) do
     --     self:_syncServerInfo(data)
     -- end
-    for _, data in pairs(newPlayers) do
+    for _, data in pairs(newPlayers or {}) do
+        if data.uid == g_user_info.get_user_info().uid then
+            isMeBirth = true
+            break
+        end
+    end
+
+    for _, data in pairs(newPlayers or {}) do
        self:_syncInitCreatePlayer(data)
     end
 
-    self.playerManager:GeneratePlayerAndNodes(newPlayers)
+    -- self.playerManager:GeneratePlayerAndNodes(newPlayers)
+
+    if isMeBirth then
+        self._is_frame_new_join = true
+        delay_call(0, function()
+            self._is_frame_new_join = false
+            self.playerManager:SyncAllPlayerNodeToRender()
+        end)
+        print("我重新进来了")
+        self.bgComponent:Update()
+        local removeList, addList = self.gridManager:OnUpdateGridVisible(true)
+        if removeList or addList then
+            self.foodManager:OnUpdateFood(removeList, addList)
+            self.spikySporeManager:OnUpdateVisible(removeList, addList)
+        end
+        g_panel_mgr.close('ballsbattle_cc_new.panel.dlg_ballsbattle_cc_revive_panel')
+    end
 end
 
 function BBCCInfoManager:NewFoods(foodInfos)
     for index = 1, #foodInfos do
         local idx = foodInfos[index]
-        self.gameManager:AddNewFoodFromServer(idx)
+        -- self.gameManager:AddNewFoodFromServer(idx)
         self.foodManager:CreateFoodWithServerInfo(idx)
         -- message("新食物生成")
         -- print("新食物生成")
@@ -155,7 +154,7 @@ function BBCCInfoManager:NewSpikys(spikyInfos)
         local y = info.y
         local mass = info.mass
         local pos = BBCCUtils.ClientPackLocation(x, y)
-        self.gameManager:AddNewSpikyFromServer(idx, pos, mass)
+        -- self.gameManager:AddNewSpikyFromServer(idx, pos, mass)
         self.spikySporeManager:CreateSpikyFromServer(info)
         -- print("有新的刺球了")
     end
@@ -171,7 +170,7 @@ function BBCCInfoManager:SyncFoodEatInfo(foodEatInfos)
         local foodIdx = foodEatInfos[i]
         local nodeIdx = foodEatInfos[i + 1]
         self.foodManager:RemoveFoodFromServer(foodIdx, nodeIdx)
-        self.gameManager:RemoveFoodFromServer(foodIdx)
+        -- self.gameManager:RemoveFoodFromServer(foodIdx)
         local mass = massChange[nodeIdx] or 0
         mass = mass + 1
         massChange[nodeIdx] = mass
@@ -269,7 +268,11 @@ function BBCCInfoManager:IsInVisibleRect(x, y)
 end
 
  --两种情况直接同步位置,1:目标位置不在视角内,2:差距在200个像素差以上,3:太多帧没更新了
+ ----当复活的时候重新刷新所有的节点,要不然有些节点会快速的追帧
 function BBCCInfoManager:_isNeedPullNodePosition(uid, idx, newX, newY, oldX, oldY)
+    if self._is_frame_new_join then
+        return true
+    end
     if oldX and oldY and self:IsInVisibleRect(oldX, oldY) then
         return false, 1
     end
@@ -364,8 +367,19 @@ function BBCCInfoManager:_syncServerInfo(playerInfo)
             -- print("移除节点  ", oldNodeIdx)
             self.gameManager:RemovePlayerNodeFromServer(uid, oldNodeIdx)
             self.playerManager:RemovePlayerNode(uid, oldNodeIdx)
+
+            if uid == g_user_info.get_user_info().uid then
+                local mainPlayer = self._mainPanel.playerManager:GetMyPlayerObject()
+                if mainPlayer and mainPlayer:IsDead() then
+                    local moveManager = self._mainPanel:GetMoveManager()
+                    moveManager:ResetManager()
+                    g_panel_mgr.show('ballsbattle_cc_new.panel.dlg_ballsbattle_cc_revive_panel')
+                end
+            end
         end
     end
+
+
 
     local lastTime = utils_get_tick()
     if uid == g_user_info.get_user_info().uid then

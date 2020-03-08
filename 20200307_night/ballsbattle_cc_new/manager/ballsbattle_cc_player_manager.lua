@@ -49,6 +49,60 @@ function BBCCPlayerManager:GetPlayerNodeCount()
 	return count
 end
 
+function BBCCPlayerManager:GeneratePlayer(newPlayer)
+	local data = newPlayer
+	local playerId = data.uid
+    local directionX = data.directionX
+    local directionY = data.directionY
+    local nmass = data.nmass
+    local ackCommand = data.ackCommand
+    local finalPointX = data.finalPointX
+    local finalPointY = data.finalPointY
+    local stopped = data.stopped
+    -- print("新加入一个玩家", playerId, directionX, directionY, nmass, finalPointX, finalPointY, stopped)
+    self._gameManager:CreatePlayerFromServer(playerId, directionX, directionY, nmass,finalPointX, finalPointY, stopped)
+
+	local playerObject = self.allPlayers[playerId]
+	if not playerObject then
+		playerObject = PlayerObject:New(self._mainPanel)
+		self.allPlayers[playerId] = playerObject
+	end
+	playerObject:OnJoinGame(playerId)
+	playerObject.isMe = playerId == g_user_info.get_user_info().uid
+end
+
+function BBCCPlayerManager:GeneratePlayerNodes(newPlayer)
+	local data = newPlayer
+	for _, node in ipairs(data.nodes) do
+	    local uid = node.uid
+	    local idx = node.idx
+	    local mass = node.mass
+	    local fromId = node.fromId
+	    local x = node.x
+	    local y = node.y
+	    local cd = node.cd
+	    local protect = node.protect
+	    local initStopFrame = node.initStopFrame
+	    local initSpeed = node.initSpeed
+	    local initDeltaSpeed = node.initDeltaSpeed
+	    local speedX = node.speedX
+	    local speedY = node.speedY
+	    -- print("新加入一个节点  ", uid, idx)
+	    self._gameManager:CreatePlayerNodeFromServer(uid, idx, fromId, x, y, mass, cd, protect, initStopFrame, initSpeed, initDeltaSpeed,speedX,speedY)
+
+	    local playerNode = self.playerNodeObjectPool:GetOrCreateObect()
+	    playerNode.uid = uid
+	    playerNode:OnJoinGame(idx)
+	    local playerObject = self.allPlayers[uid]
+	    playerObject:AddPlayerNode(playerNode)
+	    self.allPlayerNodes[idx] = playerNode
+
+	    local fakeBallObject = BBFakeBallObject:New(self._mainPanel, idx)
+	    fakeBallObject:ChangeInfo(x, y, mass)
+	    self.allFakeNodes[idx] = fakeBallObject
+	end
+end
+
 function BBCCPlayerManager:GeneratePlayerAndNodes(newPlayers)
 	--new player
 	for playerId, playerInfo in pairs(newPlayers or {}) do
@@ -172,4 +226,11 @@ end
 
 function BBCCPlayerManager:GetPlayerNodeObject(idx)
 	return self.allPlayerNodes[idx]
+end
+
+--当复活的时候重新刷新所有的节点,要不然有些节点会快速的追帧
+function BBCCPlayerManager:SyncAllPlayerNodeToRender()
+	for _, node in pairs(self.allPlayerNodes) do
+		node:SyncRenderPosition()
+	end
 end

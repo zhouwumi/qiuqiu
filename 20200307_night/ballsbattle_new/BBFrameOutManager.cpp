@@ -44,11 +44,18 @@ void BBFrameOutManager::FrameClear()
 	newSpikyIdxs.clear();
 
 	uid2crcs.clear();
+	deadPlayerIds.clear();
 }
 
 void BBFrameOutManager::AddNewPlayer(int uid)
 {
 	joinPlayerIds.emplace_back(uid);
+}
+
+
+void BBFrameOutManager::AddPlayerDie(int uid)
+{
+	deadPlayerIds.emplace_back(uid);
 }
 
 void BBFrameOutManager::AddNewPlayerNode(int playerId, int playerNodeId)
