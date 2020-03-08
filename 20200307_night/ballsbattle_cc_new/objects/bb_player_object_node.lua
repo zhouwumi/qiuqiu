@@ -39,6 +39,10 @@ end
 function PlayerNodeObject:SyncRenderPosition()
 	self:_updateBaseInfo()
 	self:_jumpToRenderXY()
+	self:_updateVisible()
+end
+
+function PlayerNodeObject:_updateVisible()
 	local x, y = self.displayObject:GetPosition()
 	local isInVisible = self:_isPointInVisible(x, y)
 	if isInVisible then
@@ -66,15 +70,17 @@ function PlayerNodeObject:_updatePosition(isFirst)
 		if not self.displayObject:isVisible() and not self:_isPointInVisible(self.currentRenderX, self.currentRenderY) then
 			self:_jumpToRenderXY()
 		else
-			self:_updateOtherPositionVersion2(isFirst)
-			local x, y = self.displayObject:GetPosition()
-			local isInVisible = self:_isPointInVisible(x, y)
-			if isInVisible then
-				self.displayObject:setVisible(true)
-				-- self:_trySimulateEat()
+			local curX, curY = self.displayObject:GetPosition()
+			local isJump = false
+			local deltaX = math.abs(self.currentRenderX - curX)
+			local deltaY = math.abs(self.currentRenderY - curY)
+			if deltaX > 200 or deltaY  > 200 then
+				self:_jumpToRenderXY()
 			else
-				self.displayObject:setVisible(false)
+				self:_updateOtherPositionVersion2(isFirst)
 			end
+			
+			self:_updateVisible()
 		end
 	else
 		self:_updateMePosition(isFirst)

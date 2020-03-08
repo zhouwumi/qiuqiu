@@ -17,7 +17,6 @@ end
 
 function BBCCInfoManager:ReEnter()
     self.lastAckCache = {}
-    self.beEatNodeCache = {}
     self.gameManager = self._mainPanel.gameManager
     show_loading_panel("wait_player", 10)
 end
@@ -27,7 +26,6 @@ local function unpackSporeInfo(sporeInfo)
 end
 
 function BBCCInfoManager:SyncFirstData(data)
-   
     local sporeInfos = data.sporeInfos or {}
     for _, sporeInfo in pairs(sporeInfos) do
         local idx, fromId, uid, speedX, speedY, x, y, initSpeed, initDeltaSpeed, initStopFrame, cd = unpackSporeInfo(sporeInfo)
@@ -107,15 +105,19 @@ function BBCCInfoManager:SyncNewPlayers(data)
             self._is_frame_new_join = false
             self.playerManager:SyncAllPlayerNodeToRender()
         end)
-        print("我重新进来了")
-        self.bgComponent:Update()
-        local removeList, addList = self.gridManager:OnUpdateGridVisible(true)
-        if removeList or addList then
-            self.foodManager:OnUpdateFood(removeList, addList)
-            self.spikySporeManager:OnUpdateVisible(removeList, addList)
-        end
-        g_panel_mgr.close('ballsbattle_cc_new.panel.dlg_ballsbattle_cc_revive_panel')
+        self:_onRevive()
     end
+end
+
+function BBCCInfoManager:_onRevive()
+    print("我重新进来了")
+    self.bgComponent:Update()
+    local removeList, addList = self.gridManager:OnUpdateGridVisible(true)
+    if removeList or addList then
+        self.foodManager:OnUpdateFood(removeList, addList)
+        self.spikySporeManager:OnUpdateVisible(removeList, addList)
+    end
+    g_panel_mgr.close('ballsbattle_cc_new.panel.dlg_ballsbattle_cc_revive_panel')
 end
 
 function BBCCInfoManager:NewFoods(foodInfos)
@@ -205,19 +207,6 @@ function BBCCInfoManager:SyncSpikyEatInfos(spikyEatInfos)
     end
 end
 
-function BBCCInfoManager:SyncEatNode(nodeEatInfos)
-    if not nodeEatInfos or #nodeEatInfos <= 0 then
-        return
-    end
-    if not self.beEatNodeCache then
-        self.beEatNodeCache = {}
-    end
-    for index = 1, #nodeEatInfos, 2 do
-        local beEatNodeId = nodeEatInfos[index]
-        local eatNodeId = nodeEatInfos[index + 1]
-        self.beEatNodeCache[beEatNodeId] = eatNodeId
-    end
-end
 
 function BBCCInfoManager:UpdateServerAck(serverAcks)
     if not serverAcks then

@@ -424,14 +424,18 @@ void BBPlayerManager::DoSpikySplit()
 			SpikyEatInfo& info = gameManager->frameOutManager.spikyEatInfos[i];
 			int nodeId = info.nodeId;
 			int spikyBallMass = info.spikyBallMass;
-			BBPlayerNode* playerNode = mapPlayNodes[nodeId];
-			int totalNum = playerNode->player->vecPlayerNodes.size();
-			int maxCanSplit = BBConfigManager::maxBallCount - totalNum;
-			if (maxCanSplit > BBConfigManager::maxSpikySplitChildCount)
+			auto iter = mapPlayNodes.find(nodeId);
+			if (iter != mapPlayNodes.end())
 			{
-				maxCanSplit = BBConfigManager::maxSpikySplitChildCount;
+				BBPlayerNode* playerNode = iter->second;
+				int totalNum = playerNode->player->vecPlayerNodes.size();
+				int maxCanSplit = BBConfigManager::maxBallCount - totalNum;
+				if (maxCanSplit > BBConfigManager::maxSpikySplitChildCount)
+				{
+					maxCanSplit = BBConfigManager::maxSpikySplitChildCount;
+				}
+				playerNode->SpikySplit(gameManager, maxCanSplit, spikyBallMass);
 			}
-			playerNode->SpikySplit(gameManager, maxCanSplit, spikyBallMass);
 		}
 	}
 }

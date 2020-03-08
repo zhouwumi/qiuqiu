@@ -226,7 +226,6 @@ function BBCCServerComponent:SyncFirstData()
 end
 
 
-
 --只同步新的玩家
 function BBCCServerComponent:SyncNewPlayers()
 	local newPlayerIds = self.gameManager:GetFrameNewPlayer()
@@ -287,8 +286,10 @@ function BBCCServerComponent:getVisibleRect()
 	for _, playerNodeId in ipairs(playerNodeIds or {}) do
 		local uid, idx, fromId, x, y, mass, cd, protect, initStopFrame, initSpeed, initDeltaSpeed, speedX, speedY = self.gameManager:GetPlayerNodeInfo(playerNodeId)
 		local raidus = self:Mass2Radius(mass)
+		x = x / 1000
+		y = y / 1000
 		local startx, starty, endx, endy = x - raidus, y - raidus, x + raidus, y + raidus
-		return startx - 1280, starty + 1280, endx - 960, endy + 960
+		return startx - 1280 - 640, starty - 960 - 480, endx + 1280 + 640, endy + 960 + 480
 	end	
 end
 
@@ -296,8 +297,9 @@ function BBCCServerComponent:_getCanUpdatePlayerIds()
 	local minX, minY, maxX, maxY
 	if self._frame_generate_main_player then
 		minX, minY, maxX, maxY = self:getVisibleRect() 
+	else
+		minX, minY, maxX, maxY = self._mainPanel.bgComponent:GetCanSyncRect()
 	end
-    minX, minY, maxX, maxY = self._mainPanel.bgComponent:GetCanSyncRect()
     local playerIds = self.gameManager:GetAllPlayerIdxInRect(minX, maxX, minY, maxY)
     return playerIds
 end
@@ -406,12 +408,6 @@ function BBCCServerComponent:SyncEatSpore()
 	local sporeEatInfos = self.gameManager:GetEatSpores()
 	self.serverToClientComponent:SyncSporeEatInfo(sporeEatInfos)
 end
-
-function BBCCServerComponent:SyncEatNode()
-	local nodeEatInfos = self.gameManager:GetEatNodes()
-	self.serverToClientComponent:SyncEatNode(nodeEatInfos)
-end
-
 
 function BBCCServerComponent:SyncNewFood()
 	local foodInfos = self.gameManager:GetFrameNewFood()
