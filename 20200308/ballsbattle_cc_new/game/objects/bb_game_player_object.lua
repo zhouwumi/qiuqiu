@@ -404,14 +404,15 @@ function BBGamePlayerObject:processTick(command)
 	self:Move();
 	local time2 = utils_get_tick()
 	
-	local crc = self:GetCrc();
-	local time3 = utils_get_tick()
+	local crc
 	self._mainPanel.frameManager:CacheTime(time2 - time1, time3 - time2)
 	if self:IsMe() then
+		self:GetCrc();
 		self.gameManager.moveManager:SetCheckSum(crc)
 	else
 		crc = self:GetLuaCrc()
 	end
+	local time3 = utils_get_tick()
 	self._is_node_dirty = true
 	return crc;
 end
