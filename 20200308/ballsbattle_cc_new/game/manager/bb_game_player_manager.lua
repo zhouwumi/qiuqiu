@@ -63,7 +63,10 @@ function BBGamePlayerManager:RemovePlayerNode(uid, nodeIdx)
 		-- 	end
 		-- end
 	end
-	self.gameManager.clzManager:ReturnPlayerNode(node)
+	if node then
+		node:Clear()
+		self.gameManager.clzManager:ReturnPlayerNode(node)
+	end
 end
 
 function BBGamePlayerManager:CreatePlayerNodeFromServer(uid, idx, fromId, x, y, mass, cd, protect, initStopFrame, initSpeed, initDeltaSpeed, speedX, speedY)

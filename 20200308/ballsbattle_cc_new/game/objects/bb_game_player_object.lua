@@ -130,12 +130,14 @@ function BBGamePlayerObject:AddPlayerNode(node)
 		self:UpdateFinalPoint(node1.location.x, node1.location.y)
 	end
 	self._is_node_dirty = true
+	self._massChange = true
 end
 
 function BBGamePlayerObject:RemovePlayerNode(node)
 	for i, playerNode in ipairs(self.vecPlayerNodes or {}) do
 		if playerNode == node then
 			self._is_node_dirty = true
+			self._massChange = true
 			table.remove(self.vecPlayerNodes, i)
 			return
 		end
@@ -150,31 +152,46 @@ function BBGamePlayerObject:GetPlayerNode(idx)
 	end
 end
 
+function BBGamePlayerObject:OnMassChange()
+	self._massChange = true
+end
+
 function BBGamePlayerObject:RemoveMass()
 	if #self.vecPlayerNodes == 0 then
 		return
 	end
-	local maxMass = -1;
-	local maxMassIdx = -1;
-	local maxPlayerNode = nil;
-	for i = 1, #self.vecPlayerNodes do
-		local node = self.vecPlayerNodes[i];
-		local mass = node:GetBallMass();
-		if maxMass < mass then
-			maxMass = mass;
-			maxMassIdx = node.idx;
-			maxPlayerNode = node;
-		elseif maxMass == mass and node.idx < maxMassIdx then
-			maxMassIdx = node.idx;
-			maxPlayerNode = node;
+	if self._massChange or self._lastMassCnt ~= #self.vecPlayerNodes or not self.lastMaxMass or not self.maxPlayerNode then
+		local maxMass = -1;
+		local maxMassIdx = -1;
+		local maxPlayerNode = nil;
+		for i = 1, #self.vecPlayerNodes do
+			local node = self.vecPlayerNodes[i];
+			local mass = node:GetBallMass();
+			if maxMass < mass then
+				maxMass = mass;
+				maxMassIdx = node.idx;
+				maxPlayerNode = node;
+			elseif maxMass == mass and node.idx < maxMassIdx then
+				maxMassIdx = node.idx;
+				maxPlayerNode = node;
+			end
 		end
+
+		self._massChange = false
+		self._lastMassCnt = #self.vecPlayerNodes
+		self.lastMaxMass = maxMass
+		self.maxPlayerNode = maxPlayerNode
 	end
-	local massToRemove = maxMass;
+	
+	if not self.lastMaxMass or not self.maxPlayerNode then
+		return
+	end
+	local massToRemove = self.lastMaxMass;
 	local delta = math.floor((massToRemove + self.NMass) / 1000)
 	if delta > 0 then
 		self.NMass = (massToRemove + self.NMass) % 1000;
-		if maxMass - delta >= constant_ballsbattle_cc.BBConfigManager.initBallMass then
-			maxPlayerNode:ChangeDeltaMass(-delta);
+		if massToRemove - delta >= constant_ballsbattle_cc.BBConfigManager.initBallMass then
+			self.maxPlayerNode:ChangeDeltaMass(-delta);
 		end
 	else
 		self.NMass = self.NMass + massToRemove;
@@ -405,14 +422,15 @@ function BBGamePlayerObject:processTick(command)
 	local time2 = utils_get_tick()
 	
 	local crc
-	self._mainPanel.frameManager:CacheTime(time2 - time1, time3 - time2)
+	
 	if self:IsMe() then
-		self:GetCrc();
+		crc = self:GetCrc();
 		self.gameManager.moveManager:SetCheckSum(crc)
 	else
 		crc = self:GetLuaCrc()
 	end
 	local time3 = utils_get_tick()
+	self._mainPanel.frameManager:CacheTime(time2 - time1, time3 - time2)
 	self._is_node_dirty = true
 	return crc;
 end

@@ -22,6 +22,25 @@ function BBGamePlayerNodeObject:__init__()
 	self.__temp_crc_table = {0, 0}
 end
 
+function BBGamePlayerNodeObject:Clear()
+	self.uid = 0
+	self.player = nil
+end
+
+function BBGamePlayerNodeObject:ChangeDeltaMass(delta)
+	PlayerNodeSuper.ChangeDeltaMass(self, delta)
+	if self.player then
+		self.player:OnMassChange()
+	end
+end
+
+function BBGamePlayerNodeObject:SetBallMass(mass)
+	PlayerNodeSuper.SetBallMass(self, mass)
+	if self.player then
+		self.player:OnMassChange()
+	end
+end
+
 function BBGamePlayerNodeObject:ChangeCd(delta)
 	local cd = math.floor(delta * self.mass / 1000 + 0.5)
 	self.cd = math.floor(cd / 5) * 5
