@@ -104,9 +104,9 @@ function BBGamePlayerNodeObject:Move(gameManager)
 	-- if not self.player:IsMe() then
 	-- 	print("BBGamePlayerNodeObject Move before  ", self.idx, self.location.x, self.location.y, self.mDeltaData.location.x, self.mDeltaData.location.y)
 	-- end
-	
-	local oldX = self.location.x
-	local oldY = self.location.y
+	local tempLocation = self.location
+	local oldX = tempLocation.x
+	local oldY = tempLocation.y
 
 	-- local oldLocation = {x = self.location.x, y = self.location.y}
 	local locVecX, locVecY = self:_stepMove()
@@ -131,15 +131,16 @@ function BBGamePlayerNodeObject:Move(gameManager)
 	
 	self:ChangePosition(fixedX, fixedY)
 	
+	local tempDeltaData = self.mDeltaData
 	if not self.player.isCatchingUp then
-		local deltaX = self.location.x - oldX
-		local deltaY = self.location.y - oldY
-		local newRenderX = self.mDeltaData.location.x + deltaX
-		local newRenderY = self.mDeltaData.location.y + deltaY
-		if self.mDeltaData.wrapTicks > 0 then
-			newRenderX = newRenderX + self.mDeltaData.wrapLocationOffset.x
-			newRenderY = newRenderY + self.mDeltaData.wrapLocationOffset.y
-			self.mDeltaData.wrapTicks = self.mDeltaData.wrapTicks - 1
+		local deltaX = tempLocation.x - oldX
+		local deltaY = tempLocation.y - oldY
+		local newRenderX = tempDeltaData.location.x + deltaX
+		local newRenderY = tempDeltaData.location.y + deltaY
+		if tempDeltaData.wrapTicks > 0 then
+			newRenderX = newRenderX + tempDeltaData.wrapLocationOffset.x
+			newRenderY = newRenderY + tempDeltaData.wrapLocationOffset.y
+			tempDeltaData.wrapTicks = tempDeltaData.wrapTicks - 1
 		end
 		self:ChangeRenderPosition(newRenderX, newRenderY)
 		-- print("client node current render position is: ", newRenderX, newRenderY)
@@ -168,17 +169,19 @@ function BBGamePlayerNodeObject:MoveBack(gameManager)
 end
 
 function BBGamePlayerNodeObject:_stepMove()
-	local finalX = self.player.FinalPoint.x
-	local finalY = self.player.FinalPoint.y
+	local finalPoint = self.player.FinalPoint
+	local tempLocation = self.location
+	local finalX = finalPoint.x
+	local finalY = finalPoint.y
 	-- local finalPoint = {x = self.player.FinalPoint.x, y = self.player.FinalPoint.y}
-	local lastX = self.location.x
-	local lastY = self.location.y
+	local lastX = tempLocation.x
+	local lastY = tempLocation.y
 	if self.initStopFrame > 0 then
 		self:InitMove()
 	end
 
-	local locVecX = self.location.x
-	local locVecY = self.location.y
+	local locVecX = tempLocation.x
+	local locVecY = tempLocation.y
 	-- local locVec = {x = , y = self.location.y}
 	if self.currentSpeedVec.x ~= 0 or self.currentSpeedVec.y ~= 0 then
 		locVecX = locVecX + self.currentSpeedVec.x
@@ -187,7 +190,6 @@ function BBGamePlayerNodeObject:_stepMove()
 		if self.initStopFrame > 0 then
 			return locVecX, locVecY
 		end
-
 		if lastX <= finalX and locVecX >= finalX then
 			locVecX = finalX
 		end
@@ -205,6 +207,7 @@ function BBGamePlayerNodeObject:_stepMove()
 	return locVecX, locVecY
 end
 
+local deltaLen = constant_ballsbattle_cc.BBConfigManager.ballEatRate
 function BBGamePlayerNodeObject:_handleNodeHit(locVecX, locVecY)
 	local minX = locVecX - self.radius
 	local maxX = locVecX + self.radius
@@ -218,14 +221,14 @@ function BBGamePlayerNodeObject:_handleNodeHit(locVecX, locVecY)
 			local ballBect = ballB.rect
 			if ballBect.minX >= maxX or ballBect.maxX <= minX or ballBect.minY >= maxY or ballBect.maxY <= minY then
 			else
-				local deltaX = ballB.location.x - locVecX
-				local deltaY = ballB.location.y - locVecY
-				local distance = math.sqrt(deltaX * deltaX + deltaY *deltaY)
-				local totalCircle = ballB.radius + self.radius
-				if totalCircle > distance and distance > 0 then
-					local length = totalCircle - distance
-					local deltaLen = constant_ballsbattle_cc.BBConfigManager.ballEatRate
-					if self.cd > 0 or ballB.cd > 0 or BBGameMathUtils.NeedRollback(self, ballB, deltaLen) then
+				if self.cd > 0 or ballB.cd > 0 or BBGameMathUtils.NeedRollback(self, ballB, deltaLen) then
+					local deltaX = ballB.location.x - locVecX
+					local deltaY = ballB.location.y - locVecY
+					local distance = deltaX * deltaX + deltaY * deltaY
+					local totalCircle = ballB.radius + self.radius
+					if totalCircle * totalCircle > distance and distance > 0 then
+						distance = math.sqrt(distance)
+						local length = totalCircle - distance
 						-- local fixVecX = -1 * deltaX
 						-- local fixVecY = -1 * deltaY
 						-- local vecX, vecY = BBGameMathUtils.GetFixedVetor2ByXY(fixVecX, fixVecY, length)
@@ -244,11 +247,14 @@ function BBGamePlayerNodeObject:_handleNodeHit(locVecX, locVecY)
 						-- elseif locVecY > ballB.location.y then
 						-- 	locVecY = locVecY + math.abs(vecY)
 						-- end
+						minX = locVecX - self.radius
+						maxX = locVecX + self.radius
+						minY = locVecY - self.radius
+						maxY = locVecY + self.radius
+						isHit = true
 					end
-					isHit = true
 				end
-			end
-			
+			end			
 		end
 	end
 	return isHit, locVecX, locVecY

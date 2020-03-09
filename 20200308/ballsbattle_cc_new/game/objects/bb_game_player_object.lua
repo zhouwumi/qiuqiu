@@ -353,27 +353,28 @@ end
 
 function BBGamePlayerObject:_tryUpdateFinalPoint()
 	if not self.Stopped then
-		local rect = self:GetGroupRect()
-		local w = rect.maxX - rect.minX
-		local h = rect.maxY - rect.minY
-		local halfLen = math.floor(math.sqrt(w * w + h * h) / 2)
-		local baseLen = halfLen * constant_ballsbattle_cc.BBConfigManager.ballMoveRate
-
-		baseLen = math.max(baseLen, constant_ballsbattle_cc.BBConfigManager.fixLength)
-
-		-- //BBMathUtils::BBLOG("rect info: %i-%i-%i ", w, h, halfLen);
-		local extLen = baseLen * BBGameMathUtils.PressureToPercent(self.direction.y);
-		local targetVecX, targetVecY = BBGameMathUtils.AngleToFixedVector(math.floor(self.direction.x / 10.0), extLen);
 		-- print('_tryUpdateFinalPoint  ', rect.centerX,  rect.centerY, targetVecX, targetVecY, extLen, self.direction.x)
-		if targetVecX == 0 and targetVecY == 0 and #self.vecPlayerNodes == 1 then
+		if self.direction.y == 0 and #self.vecPlayerNodes == 1 then
 			for _, node in ipairs(self.vecPlayerNodes or {}) do
 				node.currentSpeedVec.x = 0
 				node.currentSpeedVec.y = 0
 				self:UpdateFinalPoint(node.location.x, node.location.y)
 			end
 		else
-			self:UpdateFinalPoint(rect.centerX + targetVecX, rect.centerY + targetVecY);
-		end
+			local rect = self:GetGroupRect()
+			local w = rect.maxX - rect.minX
+			local h = rect.maxY - rect.minY
+			local halfLen = math.floor(math.sqrt(w * w + h * h) / 2)
+			local baseLen = halfLen * constant_ballsbattle_cc.BBConfigManager.ballMoveRate
+
+			baseLen = math.max(baseLen, constant_ballsbattle_cc.BBConfigManager.fixLength)
+
+			-- //BBMathUtils::BBLOG("rect info: %i-%i-%i ", w, h, halfLen);
+			local extLen = baseLen * BBGameMathUtils.PressureToPercent(self.direction.y);
+			local targetVecX, targetVecY = BBGameMathUtils.AngleToFixedVector(math.floor(self.direction.x / 10.0), extLen);
+
+			self:UpdateFinalPoint(rect.centerX + targetVecX, rect.centerY + targetVecY)
+		end		
 	end
 
 	-- //一定要在这里,不能放在上面,否则停不下来，因为放在上面finalPoint就不会更新了.

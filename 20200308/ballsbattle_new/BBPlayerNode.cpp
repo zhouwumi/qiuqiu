@@ -251,6 +251,11 @@ bool BBPlayerNode::_handleNodeHit(BBVector& locVec)
 					{
 						locVec.y = locVec.y + fabs(vec.y);
 					}
+
+					minX = locVec.x - this->GetRadius();
+					maxX = locVec.x + this->GetRadius();
+					minY = locVec.y - this->GetRadius();
+					maxY = locVec.y + this->GetRadius();
 				}
 				ret = true;
 			}

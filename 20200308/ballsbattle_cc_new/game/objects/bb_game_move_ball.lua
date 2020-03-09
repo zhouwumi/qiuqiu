@@ -4,6 +4,9 @@ local BBGameBallDeltaData = import('logic.dialog.ballsbattle_cc_new.game.data.bb
 
 BBGameMoveBallObject, MoveBallSuper = CreateClass(BBGameBaseBallObject)
 
+local local_bb_fix_float = BBGameMathUtils.bb_fix_float
+local local_bb_float_to_int = BBGameMathUtils.bb_float_to_int
+
 function BBGameMoveBallObject:__init__()
 	MoveBallSuper.__init__(self)
 	self.fromId = 0
@@ -36,39 +39,41 @@ function BBGameMoveBallObject:ChangeDeltaMass(delta)
 end
 
 function BBGameMoveBallObject:GetIntSpeedX()
-	return BBGameMathUtils.bb_float_to_int(self.currentSpeedVec.x)
+	return local_bb_float_to_int(self.currentSpeedVec.x)
 end
 
 function BBGameMoveBallObject:GetIntSpeedY()
-	return BBGameMathUtils.bb_float_to_int(self.currentSpeedVec.y)
+	return local_bb_float_to_int(self.currentSpeedVec.y)
 end
 
 function BBGameMoveBallObject:GetIntLocationX()
-	return BBGameMathUtils.bb_float_to_int(self.location.x)
+	return local_bb_float_to_int(self.location.x)
 end
 
 function BBGameMoveBallObject:GetIntLocationY()
-	return BBGameMathUtils.bb_float_to_int(self.location.y)
+	return local_bb_float_to_int(self.location.y)
 end
 
 function BBGameMoveBallObject:GetRenderX()
-	return BBGameMathUtils.bb_float_to_int(self.mDeltaData.fixedLocation.x)
+	return local_bb_float_to_int(self.mDeltaData.fixedLocation.x)
 end
 
 function BBGameMoveBallObject:GetRenderY()
-	return BBGameMathUtils.bb_float_to_int(self.mDeltaData.fixedLocation.y)
+	return local_bb_float_to_int(self.mDeltaData.fixedLocation.y)
 end
 
 function BBGameMoveBallObject:ChangePosition(x, y)
-	self.location.x = BBGameMathUtils.bb_fix_float(x)
-	self.location.y =  BBGameMathUtils.bb_fix_float(y)
-	self.rect:SetRect(self.location.x - self.radius, self.location.y - self.radius, self.location.x + self.radius, self.location.y + self.radius)
+	local tempLocation = self.location
+	local radius = self.radius
+	tempLocation.x = local_bb_fix_float(x)
+	tempLocation.y = local_bb_fix_float(y)
+	self.rect:SetRect(tempLocation.x - radius, tempLocation.y - radius, tempLocation.x + radius, tempLocation.y + radius)
 	-- print("ChangePosition  ", self.location.x, self.location.y)
 end
 
 function BBGameMoveBallObject:ChangeRenderPosition(newX, newY)
-	newX = BBGameMathUtils.bb_fix_float(newX)
-	newY = BBGameMathUtils.bb_fix_float(newY)
+	newX = local_bb_fix_float(newX)
+	newY = local_bb_fix_float(newY)
 	self.mDeltaData.location.x = newX
 	self.mDeltaData.location.y = newY
 	-- print("ChangeRenderPosition  ", newX, newY)
@@ -109,19 +114,21 @@ function BBGameSporeObject:CalculateInitMoveParams(radius, frame, initSpeed)
 end
 
 function BBGameSporeObject:ChangeRenderPosition(newX, newY)
-	newX = BBGameMathUtils.bb_fix_float(newX)
-	newY = BBGameMathUtils.bb_fix_float(newY)
-	self.mDeltaData.location.x = newX
-	self.mDeltaData.location.y = newY
+	newX = local_bb_fix_float(newX)
+	newY = local_bb_fix_float(newY)
+	local tempDeltaData = self.mDeltaData
+	tempDeltaData.location.x = newX
+	tempDeltaData.location.y = newY
 
 	local isFix, fixedX, fixedY = BBGameMathUtils.FixCircleDefaultRect(newX, newY, self:GetRadius())
-	self.mDeltaData.fixedLocation.x = fixedX
-	self.mDeltaData.fixedLocation.y = fixedY
+	tempDeltaData.fixedLocation.x = fixedX
+	tempDeltaData.fixedLocation.y = fixedY
 end
 
 function BBGameSporeObject:CalcBallDelta()
+	local tempDeltaData = self.mDeltaData
 	local ticks = self.initStopFrame
-	self.mDeltaData.wrapTicks = ticks
-	self.mDeltaData.wrapLocationOffset.x = (self.location.x - self.mDeltaData.location.x) / ticks
-	self.mDeltaData.wrapLocationOffset.y = (self.location.y - self.mDeltaData.location.y) / ticks
+	tempDeltaData.wrapTicks = ticks
+	tempDeltaData.wrapLocationOffset.x = (self.location.x - tempDeltaData.location.x) / ticks
+	tempDeltaData.wrapLocationOffset.y = (self.location.y - tempDeltaData.location.y) / ticks
 end
