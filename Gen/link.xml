@@ -1,0 +1,40 @@
+﻿
+
+<linker>
+
+	<assembly fullname="Unity.2D.SpriteShape.Runtime">
+	    <type fullname="UnityEngine.U2D.SpriteShapeController" preserve="all"/>
+		
+	</assembly>
+
+	<assembly fullname="UnityEngine.AudioModule">
+	    <type fullname="UnityEngine.AudioListener" preserve="all"/>
+		
+	</assembly>
+
+	<assembly fullname="Assembly-CSharp">
+	    <type fullname="Language" preserve="all"/>
+		<type fullname="TextUtil" preserve="all"/>
+		<type fullname="DialogParameter" preserve="all"/>
+		<type fullname="EasyAlphabetArabic.EasyArabicCore" preserve="all"/>
+		<type fullname="CreateObjectParam" preserve="all"/>
+		<type fullname="AssetBundleManager" preserve="all"/>
+		<type fullname="CustomSceneManager" preserve="all"/>
+		<type fullname="Net" preserve="all"/>
+		<type fullname="HeroScoreComponent" preserve="all"/>
+		<type fullname="GameConfig" preserve="all"/>
+		<type fullname="LuaBehaviour" preserve="all"/>
+		
+	</assembly>
+
+	<assembly fullname="UnityEngine.UIModule">
+	    <type fullname="UnityEngine.Canvas" preserve="all"/>
+		
+	</assembly>
+
+	<assembly fullname="UnityEngine.AnimationModule">
+	    <type fullname="UnityEngine.Animator" preserve="all"/>
+		
+	</assembly>
+
+</linker>
